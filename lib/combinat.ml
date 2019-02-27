@@ -196,37 +196,101 @@ let combinations_iter ~f t n =
       if i <= t then Array.unsafe_set c' (i - 1) x ;
       Array.unsafe_set arr i x
     in
-    let j = ref t in
-    let x = ref 0 in
-    let rec t2 () =
+    let j = t in
+    let x = 0 in
+    let rec t2 x j =
       f c' ;
-      if !j > 0 then (
-        x := !j ;
-        t6 () )
-      else t3 ()
-    and t3 () =
+      if j > 0 then
+        let x = j in
+        t6 x j
+      else t3 x j
+    and t3 x j =
       if c.%(1) + 1 < c.%(2) then (
         c.%(1) <- (c.%(1) + 1) ;
-        t2 () )
-      else (
-        j := 2 ;
-        t4_t5 () )
-    and t4_t5 () =
-      let rec loop () =
-        c.%((!j - 1)) <- (!j - 2) ;
-        x := c.%(!j) + 1 ;
-        if !x = c.%((!j + 1)) then (
-          j := !j + 1 ;
-          loop () )
+        t2 x j )
+      else
+        let j = 2 in
+        t4_t5 j
+    and t4_t5 (j : int) : unit =
+      let rec loop j =
+        c.%((j - 1)) <- (j - 2) ;
+        if c.%(j) + 1 = c.%((j + 1)) then
+          let j = j + 1 in
+          loop j
+        else j
       in
-      loop () ;
-      if !j <= t then t6 ()
-    and t6 () =
-      c.%(!j) <- !x ;
-      j := !j - 1 ;
-      t2 ()
+      let j = loop j in
+      let x = c.%(j) + 1 in
+      if j <= t then t6 x j else ()
+    and t6 (x : int) (j : int) : unit =
+      c.%(j) <- x ;
+      let j = j - 1 in
+      t2 x j
     in
-    t2 ()
+    t2 x j
+
+let combinations_iter_ba ~f t n =
+  assert (t >= 0 && t <= n) ;
+  if t = 0 then ()
+  else if t = n then
+    f (Array.init n ~f:(fun i -> i) |> Bigarray.(Array1.of_array int c_layout))
+  else
+    let c = Bigarray.(Array1.create int c_layout (t + 3)) in
+    for i = 1 to t do
+      c.{i} <- i - 1
+    done ;
+    c.{t + 1} <- n ;
+    c.{t + 2} <- 0 ;
+    let j = t in
+    let x = 0 in
+    let c' = Bigarray.Array1.sub c 1 t in
+    let rec t2 (x : int) (j : int) =
+      f c' ;
+      if j > 0 then (
+        let x = j in
+        c.{j} <- x ;
+        let j = j - 1 in
+        t2 x j )
+      else if c.{1} + 1 < c.{2} then (
+        c.{1} <- c.{1} + 1 ;
+        t2 x j )
+      else
+        let j = 2 in
+        let rec loop j =
+          c.{j - 1} <- j - 2 ;
+          if c.{j} + 1 = c.{j + 1} then
+            let j = j + 1 in
+            loop j
+          else j
+        in
+        let j = loop j in
+        let x = c.{j} + 1 in
+        if j <= t then (
+          c.{j} <- x ;
+          let j = j - 1 in
+          t2 x j )
+        else ()
+    in
+    t2 x j
+
+let to_array arr = Array.init (Bigarray.Array1.dim arr) ~f:(fun i -> arr.{i})
+
+let%expect_test "combinations" =
+  combinations_iter_ba 3 5 ~f:(fun c ->
+      Stdio.print_endline
+        (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) ) ;
+  [%expect
+    {|
+    (0 1 2)
+    (0 1 3)
+    (0 2 3)
+    (1 2 3)
+    (0 1 4)
+    (0 2 4)
+    (1 2 4)
+    (0 3 4)
+    (1 3 4)
+    (2 3 4) |}]
 
 let%expect_test "combinations" =
   combinations_iter 3 5 ~f:(fun c ->

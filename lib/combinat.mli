@@ -17,6 +17,12 @@ val combinations : int -> int -> int array Sequence.t
 
 val combinations_iter : f:(int array -> unit) -> int -> int -> unit
 
+val combinations_iter_ba :
+     f:((int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t -> unit)
+  -> int
+  -> int
+  -> unit
+
 val all_combinations : int -> int array Sequence.t
 
 module Poly : sig
