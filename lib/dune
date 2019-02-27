@@ -1,0 +1,6 @@
+(library
+ (public_name combinat)
+ (libraries base stdio)
+ (inline_tests)
+ (preprocess (pps ppx_sexp_conv ppx_expect))
+)

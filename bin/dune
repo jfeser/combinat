@@ -1,0 +1,4 @@
+(executable
+ (name bench)
+ (libraries core_bench combinat)
+ (modules bench))
