@@ -1,68 +1,102 @@
 open Base
+open Util
 module Seq = Sequence
+module A1 = Bigarray.Array1
 
-let m_partition n m =
-  (* if m <= 0 then failwiths "'m' must be greater than or equal to 1." m [%sexp_of:int]; *)
-  if n < m then Seq.empty
-  else if m <= 0 then Seq.empty
-  else if m = 1 then Seq.singleton (Array.create ~len:1 n)
-  else
-    let a_init = Array.create ~len:m 1 in
-    a_init.(0) <- n - m + 1 ;
-    let init_seq = Seq.singleton a_init in
-    let rest_seq =
-      Seq.unfold ~init:a_init ~f:(fun a ->
-          let a = Array.copy a in
-          if a.(1) >= a.(0) - 1 then (
-            let j = ref 2 in
-            let s = ref (a.(0) + a.(1) - 1) in
-            while !j < m && a.(!j) >= a.(0) - 1 do
-              s := !s + a.(!j) ;
-              Caml.incr j
-            done ;
-            if !j >= m then None
-            else
-              let x = a.(!j) + 1 in
-              a.(!j) <- x ;
-              Caml.decr j ;
-              while !j > 0 do
-                a.(!j) <- x ;
-                s := !s - x ;
-                Caml.decr j
-              done ;
-              a.(0) <- !s ;
-              Some (Array.copy a, a) )
-          else (
-            a.(0) <- a.(0) - 1 ;
-            a.(1) <- a.(1) + 1 ;
-            Some (Array.copy a, a) ) )
-    in
-    Seq.append init_seq rest_seq
+module Partition = Container.Make0 (struct
+  type t = int * int
 
-let%expect_test "m_partition" =
-  m_partition 6 3
-  |> Seq.iter ~f:(fun c ->
-         Stdio.print_endline (Sexp.to_string_hum ([%sexp_of: int array] c)) ) ;
+  module Elt = struct
+    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+
+    let equal = Util.equal
+  end
+
+  let rec loop1 a s j =
+    if a.{j} >= a.{1} - 1 then loop1 a (s + a.{j}) (j + 1) else (s, j)
+
+  let rec loop2 a x s j =
+    if j > 1 then (
+      a.{j} <- x ;
+      let s = s - x in
+      let j = j - 1 in
+      loop2 a x s j )
+    else s
+
+  let fold (n, m) ~init ~f =
+    if m = 0 then init
+    else if m = 1 then f init (Bigarray.(Array1.of_array int c_layout) [|n|])
+    else
+      let a = Bigarray.(Array1.create int c_layout (m + 2)) in
+      let a' = A1.sub a 1 m in
+      a.{1} <- n - m + 1 ;
+      for i = 2 to m do
+        a.{i} <- 1
+      done ;
+      a.{m + 1} <- -1 ;
+      let rec h2 acc =
+        let acc = f acc a' in
+        if a.{2} >= a.{1} - 1 then
+          let j = 3 in
+          let s = a.{1} + a.{2} - 1 in
+          let s, j = loop1 a s j in
+          if j <= m then (
+            let x = a.{j} + 1 in
+            a.{j} <- x ;
+            let j = j - 1 in
+            let s = loop2 a x s j in
+            a.{1} <- s ; h2 acc )
+          else acc
+        else (
+          a.{1} <- a.{1} - 1 ;
+          a.{2} <- a.{2} + 1 ;
+          h2 acc )
+      in
+      h2 init
+
+  let iter = `Define_using_fold
+end)
+
+let%expect_test "m_partition_iter" =
+  Partition.iter
+    ~f:(fun c ->
+      Stdio.print_endline
+        (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) )
+    (6, 3) ;
   [%expect {|
     (4 1 1)
     (3 2 1)
     (2 2 2) |}]
 
-let m_partition_with_zeros n m =
-  if n = 0 then Array.create ~len:m 0 |> Seq.singleton
-  else
-    Seq.init (m + 1) ~f:(fun m' ->
-        m_partition n m'
-        |> Seq.map ~f:(fun p ->
-               let p' = Array.create ~len:m 0 in
-               Array.blito ~src:p ~dst:p' () ;
-               p' ) )
-    |> Seq.concat
+module Partition_with_zeros = Container.Make0 (struct
+  type t = int * int
 
-let%expect_test "m_partition_with_zeros" =
-  m_partition_with_zeros 6 3
-  |> Seq.iter ~f:(fun c ->
-         Stdio.print_endline (Sexp.to_string_hum ([%sexp_of: int array] c)) ) ;
+  module Elt = struct
+    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+
+    let equal = Util.equal
+  end
+
+  let fold (n, m) ~init ~f =
+    let arr = Bigarray.(Array1.create int c_layout m) in
+    let f acc c =
+      A1.fill arr 0 ;
+      A1.blit c (A1.sub arr 0 (A1.dim c)) ;
+      f acc arr
+    in
+    let rec fold m' acc =
+      if m < m' then acc
+      else fold (m' + 1) (Partition.fold (n, m') ~init:acc ~f)
+    in
+    fold 0 init
+
+  let iter = `Define_using_fold
+end)
+
+let%expect_test "partition_with_zeros" =
+  Partition_with_zeros.iter (6, 3) ~f:(fun c ->
+      Stdio.print_endline
+        (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) ) ;
   [%expect
     {|
     (6 0 0)
@@ -132,151 +166,143 @@ let%expect_test "permutations" =
     (4 3 1 2)
     (4 3 2 1) |}]
 
-let combinations t n =
-  assert (t >= 0 && t <= n) ;
-  if t = 0 then Seq.singleton [||]
-  else if t = n then Seq.singleton (Array.init n ~f:(fun i -> i))
-  else
-    let c =
-      Array.init (t + 3) ~f:(fun i ->
-          if 1 <= i && i <= t then i - 1
-          else if i = t + 1 then n
-          else if i = t + 2 then 0
-          else 0 )
-    in
-    let j = t in
-    Seq.unfold_step
-      ~init:(c, j, 0, `T2)
-      ~f:(fun (c, j, x, state) ->
-        match state with
-        | `T2 ->
-            let ret = Array.sub c ~pos:1 ~len:t in
-            let state, x = if j > 0 then (`T6, j) else (`T3, x) in
-            Seq.Step.Yield (ret, (c, j, x, state))
-        | `T3 ->
-            let c, j, state =
-              if c.(1) + 1 < c.(2) then (
-                let c = Array.copy c in
-                c.(1) <- c.(1) + 1 ;
-                (c, j, `T2) )
-              else (c, 2, `T4_T5)
-            in
-            Seq.Step.Skip (c, j, x, state)
-        | `T4_T5 ->
-            let c = Array.copy c in
-            let rec loop j =
-              c.(j - 1) <- j - 2 ;
-              let x = c.(j) + 1 in
-              if x = c.(j + 1) then loop (j + 1) else (x, j)
-            in
-            let x, j = loop j in
-            if j > t then Seq.Step.Done else Seq.Step.Skip (c, j, x, `T6)
-        | `T6 ->
-            let c = Array.copy c in
-            c.(j) <- x ;
-            let j = j - 1 in
-            let state = `T2 in
-            Seq.Step.Skip (c, j, x, state) )
+module Permutation = Container.Make0 (struct
+  type t = int array
 
-let combinations_iter ~f t n =
-  assert (t >= 0 && t <= n) ;
-  if t = 0 then ()
-  else if t = n then f (Array.init n ~f:(fun i -> i))
-  else
-    let c =
-      Array.init (t + 3) ~f:(fun i ->
-          if 1 <= i && i <= t then i - 1
-          else if i = t + 1 then n
-          else if i = t + 2 then 0
-          else 0 )
-    in
-    let c' = Array.sub c ~pos:1 ~len:t in
-    let ( .%() ) = Array.unsafe_get in
-    let ( .%()<- ) arr i x =
-      if i <= t then Array.unsafe_set c' (i - 1) x ;
-      Array.unsafe_set arr i x
-    in
-    let j = t in
-    let x = 0 in
-    let rec t2 x j =
-      f c' ;
-      if j > 0 then
-        let x = j in
-        t6 x j
-      else t3 x j
-    and t3 x j =
-      if c.%(1) + 1 < c.%(2) then (
-        c.%(1) <- (c.%(1) + 1) ;
-        t2 x j )
-      else
-        let j = 2 in
-        t4_t5 j
-    and t4_t5 (j : int) : unit =
-      let rec loop j =
-        c.%((j - 1)) <- (j - 2) ;
-        if c.%(j) + 1 = c.%((j + 1)) then
-          let j = j + 1 in
-          loop j
-        else j
-      in
-      let j = loop j in
-      let x = c.%(j) + 1 in
-      if j <= t then t6 x j else ()
-    and t6 (x : int) (j : int) : unit =
-      c.%(j) <- x ;
-      let j = j - 1 in
-      t2 x j
-    in
-    t2 x j
+  module Elt = struct
+    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
 
-let combinations_iter_ba ~f t n =
-  assert (t >= 0 && t <= n) ;
-  if t = 0 then ()
-  else if t = n then
-    f (Array.init n ~f:(fun i -> i) |> Bigarray.(Array1.of_array int c_layout))
-  else
-    let c = Bigarray.(Array1.create int c_layout (t + 3)) in
-    for i = 1 to t do
-      c.{i} <- i - 1
+    let equal = Util.equal
+  end
+
+  let fold items ~init ~f =
+    let n = Array.length items in
+    let a = Bigarray.(Array1.create int c_layout (n + 1)) in
+    for i = 1 to n do
+      a.{i} <- items.(i - 1)
     done ;
-    c.{t + 1} <- n ;
-    c.{t + 2} <- 0 ;
-    let j = t in
-    let x = 0 in
-    let c' = Bigarray.Array1.sub c 1 t in
-    let rec t2 (x : int) (j : int) =
-      f c' ;
+    a.{0} <- items.(n - 1) - 1 ;
+    let a' = A1.sub a 1 n in
+    let rec l1 acc =
+      let acc = f acc a' in
+      let j = n - 1 in
+      let rec loop1 j = if a.{j} >= a.{j + 1} then loop1 (j - 1) else j in
+      let j = loop1 j in
       if j > 0 then (
-        let x = j in
-        c.{j} <- x ;
-        let j = j - 1 in
-        t2 x j )
-      else if c.{1} + 1 < c.{2} then (
-        c.{1} <- c.{1} + 1 ;
-        t2 x j )
-      else
-        let j = 2 in
-        let rec loop j =
-          c.{j - 1} <- j - 2 ;
-          if c.{j} + 1 = c.{j + 1} then
-            let j = j + 1 in
-            loop j
-          else j
+        let l = n in
+        let rec loop2 l = if a.{j} >= a.{l} then loop2 (l - 1) else l in
+        let l = loop2 l in
+        let tmp = a.{j} in
+        a.{j} <- a.{l} ;
+        a.{l} <- tmp ;
+        let k = j + 1 in
+        let l = n in
+        let rec loop3 k l =
+          if k < l then (
+            let tmp = a.{k} in
+            a.{k} <- a.{l} ;
+            a.{l} <- tmp ;
+            loop3 (k + 1) (l - 1) )
         in
-        let j = loop j in
-        let x = c.{j} + 1 in
-        if j <= t then (
+        loop3 k l ; l1 acc )
+      else acc
+    in
+    l1 init
+
+  let iter = `Define_using_fold
+end)
+
+let%expect_test "permutations_iter" =
+  Permutation.iter [|1; 2; 3; 4|] ~f:(fun c ->
+      Stdio.print_endline
+        (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) ) ;
+  [%expect
+    {|
+    (1 2 3 4)
+    (1 2 4 3)
+    (1 3 2 4)
+    (1 3 4 2)
+    (1 4 2 3)
+    (1 4 3 2)
+    (2 1 3 4)
+    (2 1 4 3)
+    (2 3 1 4)
+    (2 3 4 1)
+    (2 4 1 3)
+    (2 4 3 1)
+    (3 1 2 4)
+    (3 1 4 2)
+    (3 2 1 4)
+    (3 2 4 1)
+    (3 4 1 2)
+    (3 4 2 1)
+    (4 1 2 3)
+    (4 1 3 2)
+    (4 2 1 3)
+    (4 2 3 1)
+    (4 3 1 2)
+    (4 3 2 1) |}]
+
+module Combination = Container.Make0 (struct
+  type t = int * int
+
+  module Elt = struct
+    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+
+    let equal = Util.equal
+  end
+
+  let fold (t, n) ~init ~f =
+    assert (t >= 0 && t <= n) ;
+    if t = 0 then init
+    else if t = n then
+      f init
+        ( Array.init n ~f:(fun i -> i)
+        |> Bigarray.(Array1.of_array int c_layout) )
+    else
+      let c = Bigarray.(Array1.create int c_layout (t + 3)) in
+      for i = 1 to t do
+        c.{i} <- i - 1
+      done ;
+      c.{t + 1} <- n ;
+      c.{t + 2} <- 0 ;
+      let j = t in
+      let x = 0 in
+      let c' = A1.sub c 1 t in
+      let rec t2 acc x j =
+        let acc = f acc c' in
+        if j > 0 then (
+          let x = j in
           c.{j} <- x ;
           let j = j - 1 in
-          t2 x j )
-        else ()
-    in
-    t2 x j
+          t2 acc x j )
+        else if c.{1} + 1 < c.{2} then (
+          c.{1} <- c.{1} + 1 ;
+          t2 acc x j )
+        else
+          let j = 2 in
+          let rec loop j =
+            c.{j - 1} <- j - 2 ;
+            if c.{j} + 1 = c.{j + 1} then
+              let j = j + 1 in
+              loop j
+            else j
+          in
+          let j = loop j in
+          let x = c.{j} + 1 in
+          if j <= t then (
+            c.{j} <- x ;
+            let j = j - 1 in
+            t2 acc x j )
+          else acc
+      in
+      t2 init x j
 
-let to_array arr = Array.init (Bigarray.Array1.dim arr) ~f:(fun i -> arr.{i})
+  let iter = `Define_using_fold
+end)
 
 let%expect_test "combinations" =
-  combinations_iter_ba 3 5 ~f:(fun c ->
+  Combination.iter (3, 5) ~f:(fun c ->
       Stdio.print_endline
         (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) ) ;
   [%expect
@@ -291,94 +317,3 @@ let%expect_test "combinations" =
     (0 3 4)
     (1 3 4)
     (2 3 4) |}]
-
-let%expect_test "combinations" =
-  combinations_iter 3 5 ~f:(fun c ->
-      Stdio.print_endline (Sexp.to_string_hum ([%sexp_of: int array] c)) ) ;
-  [%expect
-    {|
-    (0 1 2)
-    (0 1 3)
-    (0 2 3)
-    (1 2 3)
-    (0 1 4)
-    (0 2 4)
-    (1 2 4)
-    (0 3 4)
-    (1 3 4)
-    (2 3 4) |}]
-
-let all_combinations n =
-  Seq.range 1 n ~stop:`inclusive
-  |> Seq.concat_map ~f:(fun t -> combinations t n)
-
-let%expect_test "combinations" =
-  combinations 3 5
-  |> Seq.iter ~f:(fun c ->
-         Stdio.print_endline (Sexp.to_string_hum ([%sexp_of: int array] c)) ) ;
-  [%expect
-    {|
-    (0 1 2)
-    (0 1 3)
-    (0 2 3)
-    (1 2 3)
-    (0 1 4)
-    (0 2 4)
-    (1 2 4)
-    (0 3 4)
-    (1 3 4)
-    (2 3 4) |}]
-
-let%expect_test "all_combinations" =
-  all_combinations 5
-  |> Seq.iter ~f:(fun c ->
-         Stdio.print_endline (Sexp.to_string_hum ([%sexp_of: int array] c)) ) ;
-  [%expect
-    {|
-    (0)
-    (1)
-    (2)
-    (3)
-    (4)
-    (0 1)
-    (0 2)
-    (1 2)
-    (0 3)
-    (1 3)
-    (2 3)
-    (0 4)
-    (1 4)
-    (2 4)
-    (3 4)
-    (0 1 2)
-    (0 1 3)
-    (0 2 3)
-    (1 2 3)
-    (0 1 4)
-    (0 2 4)
-    (1 2 4)
-    (0 3 4)
-    (1 3 4)
-    (2 3 4)
-    (0 1 2 3)
-    (0 1 2 4)
-    (0 1 3 4)
-    (0 2 3 4)
-    (1 2 3 4)
-    (0 1 2 3 4) |}]
-
-module Poly = struct
-  let permutations elems =
-    permutations (Array.init (Array.length elems) ~f:(fun x -> x))
-    |> Seq.map ~f:(fun indices -> Array.map indices ~f:(fun i -> elems.(i)))
-
-  let combinations t elems =
-    let n = Array.length elems in
-    combinations t n
-    |> Seq.map ~f:(fun indices -> Array.map indices ~f:(fun i -> elems.(i)))
-
-  let all_combinations elems =
-    let n = Array.length elems in
-    all_combinations n
-    |> Seq.map ~f:(fun indices -> Array.map indices ~f:(fun i -> elems.(i)))
-end

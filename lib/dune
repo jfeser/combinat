@@ -2,6 +2,6 @@
  (public_name combinat)
  (libraries base stdio bigarray)
  (inline_tests)
- (flags -unsafe)
+ (ocamlopt_flags -O3 -inlining-report -inline-max-unroll 2)
  (preprocess (pps ppx_sexp_conv ppx_expect))
 )
