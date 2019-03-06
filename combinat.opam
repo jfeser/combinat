@@ -9,6 +9,10 @@ bug-reports: "https://github.com/jfeser/combinat/issues"
 doc: "https://jfeser.github.io/combinat/"
 build: [["dune" "build" "-p" name "-j" jobs]]
 depends: [
-  "dune" {build & >= "1.1"}
-  "base" {>= "v0.11" & < "v0.12"}
+  "dune" {build & >= "1.7"}
+  "base" {>= "v0.11" & < "v0.13"}
+  "stdio" {>= "v0.11" & < "v0.13"}
+  "ppx_sexp_conv" {>= "v0.11" & < "v0.13"}
+  "ppx_expect" {>= "v0.11" & < "v0.13"}
+  "core_bench" {test & >= "v0.11" & < "v0.13"}
 ]
