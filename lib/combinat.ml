@@ -55,6 +55,8 @@ module Partition = Container.Make0 (struct
       h2 init
 
   let iter = `Define_using_fold
+
+  let length = `Define_using_fold
 end)
 
 let%expect_test "m_partition_iter" =
@@ -91,6 +93,8 @@ module Partition_with_zeros = Container.Make0 (struct
     fold 0 init
 
   let iter = `Define_using_fold
+
+  let length = `Define_using_fold
 end)
 
 let%expect_test "partition_with_zeros" =
@@ -210,6 +214,8 @@ module Permutation = Container.Make0 (struct
     l1 init
 
   let iter = `Define_using_fold
+
+  let length = `Define_using_fold
 end)
 
 let%expect_test "permutations_iter" =
@@ -299,6 +305,8 @@ module Combination = Container.Make0 (struct
       t2 init x j
 
   let iter = `Define_using_fold
+
+  let length = `Define_using_fold
 end)
 
 let%expect_test "combinations" =
