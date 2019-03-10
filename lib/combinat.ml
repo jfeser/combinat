@@ -212,37 +212,26 @@ module SortedPermutation = Container.Make0 (struct
     for j = 0 to n do
       a.{j} <- j ; a'.{j} <- j
     done ;
-    let rec v2 acc =
-      let acc = f acc elem in
-      let k = n in
-      v3 acc k
-    and v3 acc k =
+    let rec v3 acc k =
       let j = a'.{k} in
       let l = a.{j - 1} in
-      if l << k then v5 acc j k else v4 acc j k l
-    and v4 acc j k l =
-      a.{j - 1} <- k ;
-      a.{j} <- l ;
-      a'.{k} <- j - 1 ;
-      a'.{l} <- j ;
-      v2 acc
-    and v5 acc j k =
-      let rec loop acc j k =
-        if j < k then (
+      if l << k then (
+        for j = j to k - 1 do
           let l = a.{j + 1} in
-          a.{j} <- l ;
-          a'.{l} <- j ;
-          let j = j + 1 in
-          loop acc j k )
-        else (acc, k)
-      in
-      let acc, k = loop acc j k in
-      a.{k} <- k ;
-      a'.{k} <- k ;
-      let k = k - 1 in
-      if k > 0 then v3 acc k else acc
+          a.{j} <- l ; a'.{l} <- j
+        done ;
+        a.{k} <- k ;
+        a'.{k} <- k ;
+        let k = k - 1 in
+        if k > 0 then v3 acc k else acc )
+      else (
+        a.{j - 1} <- k ;
+        a.{j} <- l ;
+        a'.{k} <- j - 1 ;
+        a'.{l} <- j ;
+        v3 (f acc elem) n )
     in
-    v2 init
+    v3 (f init elem) n
 
   let iter = `Define_using_fold
 
