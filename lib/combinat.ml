@@ -190,6 +190,141 @@ let%expect_test "permutations_iter" =
     (4 3 1 2)
     (4 3 2 1) |}]
 
+module SortedPermutation = Container.Make0 (struct
+  type t = int * (int -> int -> bool)
+
+  module Elt = struct
+    type t =
+      (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+      * (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+
+    let equal (a1, a2) (b1, b2) = Util.equal a1 b1 && Util.equal a2 b2
+  end
+
+  let fold p ~init ~f =
+    let n, ( << ) = p in
+    let ( << ) x y =
+      match (x, y) with 0, 0 -> false | 0, _ -> true | x, y -> x << y
+    in
+    let a = Bigarray.(Array1.create int c_layout (n + 1)) in
+    let a' = Bigarray.(Array1.create int c_layout (n + 1)) in
+    let elem = (Bigarray.Array1.sub a 1 n, Bigarray.Array1.sub a' 1 n) in
+    for j = 0 to n do
+      a.{j} <- j ; a'.{j} <- j
+    done ;
+    let rec v2 acc =
+      let acc = f acc elem in
+      let k = n in
+      v3 acc k
+    and v3 acc k =
+      let j = a'.{k} in
+      let l = a.{j - 1} in
+      if l << k then v5 acc j k else v4 acc j k l
+    and v4 acc j k l =
+      a.{j - 1} <- k ;
+      a.{j} <- l ;
+      a'.{k} <- j - 1 ;
+      a'.{l} <- j ;
+      v2 acc
+    and v5 acc j k =
+      let rec loop acc j k =
+        if j < k then (
+          let l = a.{j + 1} in
+          a.{j} <- l ;
+          a'.{l} <- j ;
+          let j = j + 1 in
+          loop acc j k )
+        else (acc, k)
+      in
+      let acc, k = loop acc j k in
+      a.{k} <- k ;
+      a'.{k} <- k ;
+      let k = k - 1 in
+      if k > 0 then v3 acc k else acc
+    in
+    v2 init
+
+  let iter = `Define_using_fold
+
+  let length = `Define_using_fold
+end)
+
+let%expect_test "sorted_permutations_iter" =
+  SortedPermutation.iter
+    (4, fun x y -> match (x, y) with 1, 3 | 2, 3 | 2, 4 -> true | _ -> false)
+    ~f:(fun (c, _) ->
+      Stdio.print_endline
+        (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) ) ;
+  [%expect
+    {|
+    (1 2 3 4)
+    (1 2 4 3)
+    (2 1 3 4)
+    (2 1 4 3)
+    (2 4 1 3) |}]
+
+let%expect_test "sorted_permutations_young" =
+  let young_tableaux x y =
+    match (x, y) with
+    | 1, (2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
+     |2, (3 | 5 | 6 | 8 | 9)
+     |3, (6 | 9)
+     |4, (5 | 6 | 7 | 8 | 9)
+     |5, (6 | 8 | 9)
+     |6, 9
+     |7, (8 | 9)
+     |8, 9 ->
+        true
+    | _ -> false
+  in
+  SortedPermutation.iter (9, young_tableaux) ~f:(fun (_, c) ->
+      Stdio.print_endline
+        (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) ) ;
+  [%expect
+    {|
+    (1 2 3 4 5 6 7 8 9)
+    (1 2 3 4 5 7 6 8 9)
+    (1 2 3 4 5 8 6 7 9)
+    (1 2 3 4 6 7 5 8 9)
+    (1 2 3 4 6 8 5 7 9)
+    (1 2 4 3 5 6 7 8 9)
+    (1 2 4 3 5 7 6 8 9)
+    (1 2 4 3 5 8 6 7 9)
+    (1 2 4 3 6 7 5 8 9)
+    (1 2 4 3 6 8 5 7 9)
+    (1 2 5 3 6 7 4 8 9)
+    (1 2 5 3 6 8 4 7 9)
+    (1 2 5 3 4 6 7 8 9)
+    (1 2 5 3 4 7 6 8 9)
+    (1 2 5 3 4 8 6 7 9)
+    (1 2 6 3 4 7 5 8 9)
+    (1 2 6 3 4 8 5 7 9)
+    (1 2 7 3 4 8 5 6 9)
+    (1 2 6 3 5 7 4 8 9)
+    (1 2 6 3 5 8 4 7 9)
+    (1 2 7 3 5 8 4 6 9)
+    (1 3 4 2 5 6 7 8 9)
+    (1 3 4 2 5 7 6 8 9)
+    (1 3 4 2 5 8 6 7 9)
+    (1 3 4 2 6 7 5 8 9)
+    (1 3 4 2 6 8 5 7 9)
+    (1 3 5 2 6 7 4 8 9)
+    (1 3 5 2 6 8 4 7 9)
+    (1 4 5 2 6 7 3 8 9)
+    (1 4 5 2 6 8 3 7 9)
+    (1 3 5 2 4 6 7 8 9)
+    (1 3 5 2 4 7 6 8 9)
+    (1 3 5 2 4 8 6 7 9)
+    (1 3 6 2 4 7 5 8 9)
+    (1 3 6 2 4 8 5 7 9)
+    (1 3 7 2 4 8 5 6 9)
+    (1 3 6 2 5 7 4 8 9)
+    (1 3 6 2 5 8 4 7 9)
+    (1 3 7 2 5 8 4 6 9)
+    (1 4 6 2 5 7 3 8 9)
+    (1 4 6 2 5 8 3 7 9)
+    (1 4 7 2 5 8 3 6 9) |}]
+
 module Combination = struct
   include Container.Make0 (struct
     type t = int * int

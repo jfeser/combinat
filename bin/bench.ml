@@ -35,6 +35,25 @@ let () =
                 Permutation.iter
                   ~f:(fun _ -> ())
                   (Array.init 8 ~f:(fun i -> i)) ) ] )
+    ; ( "sorted-permutations"
+      , Bench.make_command
+          [ (let young_tableaux x y =
+               match (x, y) with
+               | 1, (2 | 3 | 4 | 5 | 6 | 7 | 8 | 9)
+                |2, (3 | 5 | 6 | 8 | 9)
+                |3, (6 | 9)
+                |4, (5 | 6 | 7 | 8 | 9)
+                |5, (6 | 8 | 9)
+                |6, 9
+                |7, (8 | 9)
+                |8, 9 ->
+                   true
+               | _ -> false
+             in
+             Bench.Test.create ~name:"sorted_permutations_internal_med"
+               (fun () ->
+                 SortedPermutation.iter (9, young_tableaux) ~f:(fun _ -> ()) ))
+          ] )
     ; ( "partitions"
       , Bench.make_command
           [ Bench.Test.create ~name:"partitions_internal_med" (fun () ->
