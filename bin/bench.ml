@@ -54,6 +54,23 @@ let () =
                (fun () ->
                  SortedPermutation.iter (9, young_tableaux) ~f:(fun _ -> ()) ))
           ] )
+    ; ( "restricted-permutations"
+      , Bench.make_command
+          [ (let restrict a =
+               match Bigarray.Array1.dim a with
+               | 1 -> not (a.{0} = 2)
+               | 2 -> not (a.{0} = 1 && a.{1} = 4)
+               | 3 ->
+                   not
+                     ( (a.{0} = 1 && a.{1} = 3 && a.{2} = 2)
+                     || (a.{0} = 3 && a.{1} = 1 && a.{2} = 4) )
+               | 4 -> not (a.{0} = 4 && a.{1} = 3 && a.{2} = 1 && a.{3} = 2)
+               | _ -> true
+             in
+             Bench.Test.create ~name:"sorted_permutations_internal_med"
+               (fun () ->
+                 RestrictedPermutation.iter (8, restrict) ~f:(fun _ -> ()) ))
+          ] )
     ; ( "partitions"
       , Bench.make_command
           [ Bench.Test.create ~name:"partitions_internal_med" (fun () ->

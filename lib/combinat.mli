@@ -27,6 +27,14 @@ module SortedPermutation :
               (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
               * (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 
+module RestrictedPermutation :
+  Container.S0
+  with type t :=
+              int
+              * (   (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+                 -> bool)
+   and type elt := (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
+
 (** Compute all of the {i t} combinations of the numbers in [0, {i n}]. *)
 module Combination :
   Container.S0

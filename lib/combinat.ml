@@ -314,6 +314,91 @@ let%expect_test "sorted_permutations_young" =
     (1 4 6 2 5 8 3 7 9)
     (1 4 7 2 5 8 3 6 9) |}]
 
+module RestrictedPermutation = Container.Make0 (struct
+  type t = int * ((int, Bigarray.int_elt, Bigarray.c_layout) A1.t -> bool)
+
+  module Elt = struct
+    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+
+    let equal = Util.equal
+  end
+
+  let fold p ~init ~f =
+    let n, t = p in
+    let a = Bigarray.(Array1.create int c_layout (n + 1)) in
+    let l = Bigarray.(Array1.create int c_layout (n + 1)) in
+    let u = Bigarray.(Array1.create int c_layout (n + 1)) in
+    let t_args = Array.create ~len:(n + 1) (Bigarray.Array1.sub a 1 1) in
+    for k = 1 to n do
+      t_args.(k) <- Bigarray.Array1.sub a 1 k
+    done ;
+    let elem = Bigarray.Array1.sub a 1 n in
+    for k = 0 to n - 1 do
+      l.{k} <- k + 1
+    done ;
+    l.{n} <- 0 ;
+    let rec x3 acc k p q =
+      a.{k} <- q ;
+      if t t_args.(k) then
+        if k = n then x6 (f acc elem) k
+        else (
+          u.{k} <- p ;
+          l.{p} <- l.{q} ;
+          x3 acc (k + 1) 0 l.{0} )
+      else
+        let p = q in
+        let q = l.{p} in
+        if q = 0 then x6 acc k else x3 acc k p q
+    and x6 acc k =
+      let k = k - 1 in
+      if k = 0 then acc
+      else
+        let p = u.{k} in
+        let q = a.{k} in
+        l.{p} <- q ;
+        let p = q in
+        let q = l.{p} in
+        if q = 0 then x6 acc k else x3 acc k p q
+    in
+    x3 init 1 0 l.{0}
+
+  let iter = `Define_using_fold
+
+  let length = `Define_using_fold
+end)
+
+let%expect_test "restricted_permutations_iter" =
+  RestrictedPermutation.iter
+    ( 4
+    , fun a ->
+        match Bigarray.Array1.dim a with
+        | 1 -> not (a.{0} = 2)
+        | 2 -> not (a.{0} = 1 && a.{1} = 4)
+        | 3 ->
+            not
+              ( (a.{0} = 1 && a.{1} = 3 && a.{2} = 2)
+              || (a.{0} = 3 && a.{1} = 1 && a.{2} = 4) )
+        | 4 -> not (a.{0} = 4 && a.{1} = 3 && a.{2} = 1 && a.{3} = 2)
+        | _ -> true )
+    ~f:(fun c ->
+      Stdio.print_endline
+        (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))) ) ;
+  [%expect
+    {|
+    (1 2 3 4)
+    (1 2 4 3)
+    (1 3 4 2)
+    (3 1 2 4)
+    (3 2 1 4)
+    (3 2 4 1)
+    (3 4 1 2)
+    (3 4 2 1)
+    (4 1 2 3)
+    (4 1 3 2)
+    (4 2 1 3)
+    (4 2 3 1)
+    (4 3 2 1) |}]
+
 module Combination = struct
   include Container.Make0 (struct
     type t = int * int
