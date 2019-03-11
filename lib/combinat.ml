@@ -1,13 +1,15 @@
 open Base
 open Util
 module Seq = Sequence
-module A1 = Bigarray.Array1
+open Bigarray
+
+type int_array = (int, int_elt, c_layout) Array1.t
 
 module Partition = Container.Make0 (struct
   type t = int * int
 
   module Elt = struct
-    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+    type t = int_array
 
     let equal = Util.equal
   end
@@ -28,7 +30,7 @@ module Partition = Container.Make0 (struct
     else if m = 1 then f init (Bigarray.(Array1.of_array int c_layout) [|n|])
     else
       let a = Bigarray.(Array1.create int c_layout (m + 2)) in
-      let a' = A1.sub a 1 m in
+      let a' = Array1.sub a 1 m in
       a.{1} <- n - m + 1 ;
       for i = 2 to m do
         a.{i} <- 1
@@ -74,7 +76,7 @@ module Partition_with_zeros = Container.Make0 (struct
   type t = int * int
 
   module Elt = struct
-    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+    type t = int_array
 
     let equal = Util.equal
   end
@@ -82,8 +84,8 @@ module Partition_with_zeros = Container.Make0 (struct
   let fold (n, m) ~init ~f =
     let arr = Bigarray.(Array1.create int c_layout m) in
     let f acc c =
-      A1.fill arr 0 ;
-      A1.blit c (A1.sub arr 0 (A1.dim c)) ;
+      Array1.fill arr 0 ;
+      Array1.blit c (Array1.sub arr 0 (Array1.dim c)) ;
       f acc arr
     in
     let rec fold m' acc =
@@ -115,7 +117,7 @@ module Permutation = Container.Make0 (struct
   type t = int array
 
   module Elt = struct
-    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+    type t = int_array
 
     let equal = Util.equal
   end
@@ -127,7 +129,7 @@ module Permutation = Container.Make0 (struct
       a.{i} <- items.(i - 1)
     done ;
     a.{0} <- items.(n - 1) - 1 ;
-    let a' = A1.sub a 1 n in
+    let a' = Array1.sub a 1 n in
     let rec l1 acc =
       let acc = f acc a' in
       let j = n - 1 in
@@ -194,9 +196,7 @@ module SortedPermutation = Container.Make0 (struct
   type t = int * (int -> int -> bool)
 
   module Elt = struct
-    type t =
-      (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
-      * (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+    type t = int_array * int_array
 
     let equal (a1, a2) (b1, b2) = Util.equal a1 b1 && Util.equal a2 b2
   end
@@ -315,10 +315,10 @@ let%expect_test "sorted_permutations_young" =
     (1 4 7 2 5 8 3 6 9) |}]
 
 module RestrictedPermutation = Container.Make0 (struct
-  type t = int * ((int, Bigarray.int_elt, Bigarray.c_layout) A1.t -> bool)
+  type t = int * (int_array -> bool)
 
   module Elt = struct
-    type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+    type t = int_array
 
     let equal = Util.equal
   end
@@ -404,7 +404,7 @@ module Combination = struct
     type t = int * int
 
     module Elt = struct
-      type t = (int, Bigarray.int_elt, Bigarray.c_layout) A1.t
+      type t = int_array
 
       let equal = Util.equal
     end
@@ -425,7 +425,7 @@ module Combination = struct
         c.{t + 2} <- 0 ;
         let j = t in
         let x = 0 in
-        let c' = A1.sub c 1 t in
+        let c' = Array1.sub c 1 t in
         let rec t2 acc x j =
           let acc = f acc c' in
           if j > 0 then (
