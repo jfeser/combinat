@@ -91,7 +91,7 @@ module Of_list = Build.Make (struct
   let fold (l, k) ~init ~f =
     let n = List.length l in
     let elems = List.to_array l in
-    fold { n; k } ~init ~f:(fun x a -> f x (List.init n ~f:(fun i -> elems.(a.{i}))))
+    fold { n; k } ~init ~f:(fun x a -> f x (List.init k ~f:(fun i -> elems.(a.{i}))))
 
   let iter = `Define_using_fold
 
