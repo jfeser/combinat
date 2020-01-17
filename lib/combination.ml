@@ -1,6 +1,20 @@
 open! Base
 open! Shared
 
+module Unsafe = struct
+  module Bigarray = struct
+    include Bigarray
+
+    module Array1 = struct
+      include Bigarray.Array1
+
+      let get : int_array -> int -> int = unsafe_get
+
+      let set : int_array -> int -> int -> unit = unsafe_set
+    end
+  end
+end
+
 type t = { n : int; k : int }
 
 include Container.Make0 (struct
@@ -14,32 +28,36 @@ include Container.Make0 (struct
 
   open Unsafe
 
-  let rec loop c j =
-    c.{j - 1} <- j - 2;
-    if c.{j} + 1 = c.{j + 1} then
-      let j = j + 1 in
-      loop c j
-    else j
+  type 'a args = {
+    c : int_array;
+    c' : int_array;
+    f : 'a -> int_array -> 'a;
+    t : int;
+  }
 
-  let rec t2 c c' f t acc x j =
+  let rec loop ({ c; t; _ } as args) acc j =
+    c.{j - 1} <- j - 2;
+    if c.{j} + 1 = c.{j + 1} then loop args acc (j + 1)
+    else if j <= t then (
+      c.{j} <- c.{j} + 1;
+      t2 args acc (j - 1) )
+    else acc
+
+  and t2 ({ c; c'; f; _ } as args) acc j =
     let acc = f acc c' in
     if j > 0 then (
-      let x = j in
-      c.{j} <- x;
-      let j = j - 1 in
-      t2 c c' f t acc x j )
-    else if c.{1} + 1 < c.{2} then (
-      c.{1} <- c.{1} + 1;
-      t2 c c' f t acc x j )
-    else
-      let j = 2 in
-      let j = loop c j in
-      let x = c.{j} + 1 in
-      if j <= t then (
-        c.{j} <- x;
-        let j = j - 1 in
-        t2 c c' f t acc x j )
+      c.{j} <- j;
+      t2 args acc (j - 1) )
+    else t3 args acc
+
+  and t3 ({ c; c'; f; _ } as args) acc =
+    let acc =
+      if c.{1} + 1 < c.{2} then (
+        c.{1} <- c.{2} - 1;
+        f acc c' )
       else acc
+    in
+    loop args acc 2
 
   let fold { n; k = t } ~init ~f =
     let open Bigarray in
@@ -55,9 +73,8 @@ include Container.Make0 (struct
       c.{t + 1} <- n;
       c.{t + 2} <- 0;
       let j = t in
-      let x = 0 in
       let c' = sub c 1 t in
-      t2 c c' f t init x j
+      t2 { c; c'; f; t } init j
 
   let iter = `Define_using_fold
 
