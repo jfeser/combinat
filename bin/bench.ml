@@ -13,6 +13,21 @@ let rec combinations_naive k list =
         let without_h = combinations_naive k tl in
         with_h @ without_h
 
+let distribute c l =
+  let rec insert acc1 acc2 = function
+    | [] -> acc2
+    | hd :: tl ->
+        insert (hd :: acc1) (List.rev_append acc1 (hd :: c :: tl) :: acc2) tl
+  in
+  insert [] [ c :: l ] l
+
+let rec permutations_naive = function
+  | [] -> [ [] ]
+  | hd :: tl ->
+      List.fold_left
+        ~f:(fun acc x -> List.rev_append (distribute hd x) acc)
+        ~init:[] (permutations_naive tl)
+
 let () =
   Command.group ~summary:"combinat benchmarks"
     [
@@ -20,21 +35,37 @@ let () =
         Bench.make_command
           [
             Bench.Test.create ~name:"combinations_naive_small" (fun () ->
-                combinations_naive 6 (List.init 10 ~f:(fun i -> i)));
-            Bench.Test.create ~name:"combinations_internal_small" (fun () ->
-                Combination.iter ~f:(fun _ -> ()) { k = 6; n = 10 });
-            Bench.Test.create ~name:"combinations_naive_med" (fun () ->
-                combinations_naive 5 (List.init 25 ~f:(fun i -> i)));
-            Bench.Test.create ~name:"combinations_internal_med" (fun () ->
-                Combination.iter ~f:(fun _ -> ()) { k = 5; n = 25 });
-            Bench.Test.create ~name:"combinations_internal_ba_large" (fun () ->
-                Combination.iter ~f:(fun _ -> ()) { k = 11; n = 33 });
+                combinations_naive 6 (List.init 10 ~f:(fun i -> i))
+                |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
+            Bench.Test.create ~name:"combinations_small" (fun () ->
+                Combination.iter
+                  ~f:(fun _ -> Sys.opaque_identity ())
+                  { k = 6; n = 10 });
+            (* Bench.Test.create ~name:"combinations_naive_med" (fun () ->
+             *     combinations_naive 5 (List.init 25 ~f:(fun i -> i))
+             *     |> List.iter ~f:(fun _ -> Sys.opaque_identity ())); *)
+            Bench.Test.create ~name:"combinations_med" (fun () ->
+                Combination.iter
+                  ~f:(fun _ -> Sys.opaque_identity ())
+                  { k = 5; n = 25 });
+            (* Bench.Test.create ~name:"combinations_large" (fun () ->
+             *     Combination.iter
+             *       ~f:(fun _ -> Sys.opaque_identity ())
+             *       { k = 11; n = 33 }); *)
           ] );
       ( "permutations",
         Bench.make_command
           [
-            Bench.Test.create ~name:"permutations_internal_med" (fun () ->
-                Permutation.iter ~f:(fun _ -> ()) 8);
+            Bench.Test.create ~name:"permutations_naive_small" (fun () ->
+                permutations_naive (List.init 3 ~f:(fun i -> i))
+                |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
+            Bench.Test.create ~name:"permutations_med" (fun () ->
+                Permutation.iter ~f:(fun _ -> Sys.opaque_identity ()) 3);
+            Bench.Test.create ~name:"permutations_naive_med" (fun () ->
+                permutations_naive (List.init 8 ~f:(fun i -> i))
+                |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
+            Bench.Test.create ~name:"permutations_med" (fun () ->
+                Permutation.iter ~f:(fun _ -> Sys.opaque_identity ()) 8);
           ] );
       ( "sorted-permutations",
         Bench.make_command
@@ -52,8 +83,9 @@ let () =
                    true
                | _ -> false
              in
-             Bench.Test.create ~name:"sorted_permutations_internal_med" (fun () ->
-                 SortedPermutation.iter (9, young_tableaux) ~f:(fun _ -> ())));
+             Bench.Test.create ~name:"sorted_permutations_med" (fun () ->
+                 let p = Permutation.Sorted.create 9 young_tableaux in
+                 Permutation.Sorted.iter p ~f:(fun _ -> Sys.opaque_identity ())));
           ] );
       ( "restricted-permutations",
         Bench.make_command
@@ -69,13 +101,14 @@ let () =
                | 4 -> not (a.{0} = 4 && a.{1} = 3 && a.{2} = 1 && a.{3} = 2)
                | _ -> true
              in
-             Bench.Test.create ~name:"sorted_permutations_internal_med" (fun () ->
-                 RestrictedPermutation.iter (8, restrict) ~f:(fun _ -> ())));
+             Bench.Test.create ~name:"restricted_permutations_med" (fun () ->
+                 let p = Permutation.Restricted.create 8 restrict in
+                 Permutation.Restricted.iter p ~f:(fun _ -> Sys.opaque_identity ())));
           ] );
       ( "partitions",
         Bench.make_command
           [
-            Bench.Test.create ~name:"partitions_internal_med" (fun () ->
+            Bench.Test.create ~name:"partitions_med" (fun () ->
                 Combinat.Partition.iter (65, 20) ~f:(fun _ -> ()));
           ] );
     ]
