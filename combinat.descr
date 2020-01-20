@@ -1,4 +1,0 @@
-Fast combinatorics functions for OCaml.
-
-combinat provides fast iterators over combinatorial objects such as
-permutations, combinations, and integer partitions.
