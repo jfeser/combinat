@@ -3,8 +3,10 @@ open Combinat
 open Shared
 
 let%expect_test "combinations" =
-  Combination.iter { k = 3; n = 5 } ~f:(fun c ->
-      Stdio.print_endline (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))));
+  Combination.create ~k:3 ~n:5
+  |> Combination.iter ~f:(fun c ->
+         Stdio.print_endline
+           (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))));
   [%expect
     {|
     (0 1 2)
@@ -19,10 +21,10 @@ let%expect_test "combinations" =
     (2 3 4) |}]
 
 let%expect_test "combinations_list" =
-  Combination.Of_list.iter
-    (List.init 10 ~f:(fun i -> i), 6)
-    ~f:(fun l -> [%sexp_of: int list] l |> Stdio.print_s);
-  [%expect {|
+  Combination.Of_list.create (List.init 10 ~f:(fun i -> i)) 6
+  |> Combination.Of_list.iter ~f:(fun l -> [%sexp_of: int list] l |> Stdio.print_s);
+  [%expect
+    {|
     (0 1 2 3 4 5)
     (0 1 2 3 4 6)
     (0 1 2 3 5 6)

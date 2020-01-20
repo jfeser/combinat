@@ -16,9 +16,10 @@ module Unsafe = struct
 end
 
 module type S = sig
-  type t = int * int
+  type t
 
   val create : n:int -> parts:int -> t
+  (** Create a partition of an integer {i n} into {i parts} parts. *)
 
   include Container.S0 with type t := t and type elt := int_array
 end

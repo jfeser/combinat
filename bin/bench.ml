@@ -31,33 +31,35 @@ let rec permutations_naive = function
 let combinations_bench =
   let open Bench in
   let open Test in
+  let module C = Combination in
   make_command
     [
       create ~name:"combinations_naive_small" (fun () ->
           combinations_naive 6 (List.init 10 ~f:(fun i -> i))
           |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
       create ~name:"combinations_list_small" (fun () ->
-          Combination.Of_list.iter
-            (List.init 10 ~f:(fun i -> i), 6)
-            ~f:(fun _ -> Sys.opaque_identity ()));
+          C.Of_list.(
+            create (List.init 10 ~f:(fun i -> i)) 6
+            |> iter ~f:(fun _ -> Sys.opaque_identity ())));
       create ~name:"combinations_small" (fun () ->
-          Combination.iter ~f:(fun _ -> Sys.opaque_identity ()) { k = 6; n = 10 });
+          C.(create ~k:6 ~n:10 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
       create ~name:"combinations_naive_med" (fun () ->
           combinations_naive 5 (List.init 25 ~f:(fun i -> i))
           |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
       create ~name:"combinations_list_small" (fun () ->
-          Combination.Of_list.iter
-            (List.init 25 ~f:(fun i -> i), 5)
-            ~f:(fun _ -> Sys.opaque_identity ()));
+          C.Of_list.(
+            create (List.init 25 ~f:(fun i -> i)) 5
+            |> iter ~f:(fun _ -> Sys.opaque_identity ())));
       create ~name:"combinations_med" (fun () ->
-          Combination.iter ~f:(fun _ -> Sys.opaque_identity ()) { k = 5; n = 25 });
+          C.(create ~k:5 ~n:25 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
       create ~name:"combinations_large" (fun () ->
-          Combination.iter ~f:(fun _ -> Sys.opaque_identity ()) { k = 11; n = 33 });
+          C.(create ~k:11 ~n:33 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
     ]
 
 let permutations_bench =
   let open Bench in
   let open Test in
+  let module P = Permutation in
   make_command
     [
       (* create_group ~name:"small"
@@ -74,7 +76,7 @@ let permutations_bench =
               permutations_naive (List.init 5 ~f:(fun i -> i))
               |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
           create ~name:"std" (fun () ->
-              Permutation.iter ~f:(fun _ -> Sys.opaque_identity ()) 5);
+              P.(create 5 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
         ];
     ]
 
@@ -129,7 +131,7 @@ let () =
         Bench.make_command
           [
             Bench.Test.create ~name:"partitions_med" (fun () ->
-                Combinat.Partition.iter (65, 20) ~f:(fun _ -> ()));
+                Combinat.Partition.(create ~n:65 ~parts:20 |> iter ~f:(fun _ -> ())));
           ] );
     ]
   |> Command.run

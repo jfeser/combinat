@@ -17,6 +17,8 @@ end
 
 type t = { n : int; k : int }
 
+let create ~n ~k = { n; k }
+
 include Container.Make0 (struct
   type nonrec t = t
 
@@ -83,19 +85,26 @@ include Container.Make0 (struct
     `Custom length
 end)
 
-module Of_list = Build.Make (struct
+module Of_list = struct
   type 'a t = 'a list * int
 
-  type 'a elt = 'a list
+  include Build.Make (struct
+    type nonrec 'a t = 'a t
 
-  let fold (l, k) ~init ~f =
-    let n = List.length l in
-    let elems = List.to_array l in
-    fold { n; k } ~init ~f:(fun x a -> f x (List.init k ~f:(fun i -> elems.(a.{i}))))
+    type 'a elt = 'a list
 
-  let iter = `Define_using_fold
+    let fold (l, k) ~init ~f =
+      let n = List.length l in
+      let elems = List.to_array l in
+      create ~n ~k
+      |> fold ~init ~f:(fun x a -> f x (List.init k ~f:(fun i -> elems.(a.{i}))))
 
-  let length =
-    let length (l, k) = length { n = List.length l; k } in
-    `Custom length
-end)
+    let iter = `Define_using_fold
+
+    let length =
+      let length (l, k) = length (create ~n:(List.length l) ~k) in
+      `Custom length
+  end)
+
+  let create l k = (l, k)
+end
