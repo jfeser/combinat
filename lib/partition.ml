@@ -1,6 +1,20 @@
 open! Base
 open! Shared
 
+module Unsafe = struct
+  module Bigarray = struct
+    include Bigarray
+
+    module Array1 = struct
+      include Bigarray.Array1
+
+      let get : int_array -> int -> int = unsafe_get
+
+      let set : int_array -> int -> int -> unit = unsafe_set
+    end
+  end
+end
+
 module type S = sig
   type t = int * int
 
@@ -26,35 +40,38 @@ module Default = struct
 
   open Unsafe
 
-  let rec loop1 a s j =
-    if a.{j} >= a.{1} - 1 then loop1 a (s + a.{j}) (j + 1) else (s, j)
+  type 'a args = {
+    a : int_array;
+    a' : int_array;
+    f : 'a -> int_array -> 'a;
+    m : int;
+  }
 
   let rec loop2 a x s j =
     if j > 1 then (
       a.{j} <- x;
-      let s = s - x in
-      let j = j - 1 in
-      loop2 a x s j )
+      loop2 a x (s - x) (j - 1) )
     else s
 
-  let rec h2 a a' f m acc =
-    let acc = f acc a' in
-    if a.{2} >= a.{1} - 1 then
-      let j = 3 in
-      let s = a.{1} + a.{2} - 1 in
-      let s, j = loop1 a s j in
-      if j <= m then (
-        let x = a.{j} + 1 in
-        a.{j} <- x;
-        let j = j - 1 in
-        let s = loop2 a x s j in
-        a.{1} <- s;
-        h2 a a' f m acc )
-      else acc
+  let rec loop1 ({ a; _ } as args) acc a1m s j =
+    let aj = a.{j} in
+    if aj >= a1m then loop1 args acc a1m (s + aj) (j + 1) else h3 args acc s j
+
+  and h2 ({ a; a'; f; _ } as args) acc =
+    let acc = f acc a' and a1m = a.{1} - 1 and a2 = a.{2} in
+    if a2 >= a1m then loop1 args acc a1m (a1m + a2) 3
     else (
-      a.{1} <- a.{1} - 1;
-      a.{2} <- a.{2} + 1;
-      h2 a a' f m acc )
+      a.{1} <- a1m;
+      a.{2} <- a2 + 1;
+      h2 args acc )
+
+  and h3 ({ a; m; _ } as args) acc s j =
+    if j <= m then (
+      let x = a.{j} + 1 in
+      a.{j} <- x;
+      a.{1} <- loop2 a x s (j - 1);
+      h2 args acc )
+    else acc
 
   let fold (n, m) ~init ~f =
     let open Bigarray in
@@ -69,7 +86,7 @@ module Default = struct
         a.{i} <- 1
       done;
       a.{m + 1} <- -1;
-      h2 a a' f m init
+      h2 { a; a'; f; m } init
 
   let iter = `Define_using_fold
 
