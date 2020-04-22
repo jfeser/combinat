@@ -22,6 +22,8 @@ module type S = sig
   (** Create a partition of an integer {i n} into {i parts} parts. *)
 
   include Container.S0 with type t := t and type elt := int_array
+
+  val to_list : t -> int list list
 end
 
 module T = struct
@@ -97,6 +99,10 @@ end
 include T
 include Container.Make0 (Default)
 
+let to_list p =
+  fold p ~init:[] ~f:(fun l x ->
+      List.init (Bigarray.Array1.dim x) ~f:(fun i -> x.{i}) :: l)
+
 module With_zeros = struct
   include T
 
@@ -119,4 +125,8 @@ module With_zeros = struct
       in
       fold 0 init
   end)
+
+  let to_list p =
+    fold p ~init:[] ~f:(fun l x ->
+        List.init (Bigarray.Array1.dim x) ~f:(fun i -> x.{i}) :: l)
 end
