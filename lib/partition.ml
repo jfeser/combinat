@@ -79,7 +79,8 @@ module Default = struct
   let fold (n, m) ~init ~f =
     let open Bigarray in
     let open Array1 in
-    if n < m || m = 0 then init
+    if n < m || (n > 0 && m = 0) then init
+    else if n = 0 then f init ((of_array int c_layout) [||])
     else if m = 1 then f init ((of_array int c_layout) [| n |])
     else
       let a = create int c_layout (m + 2) in
