@@ -8,9 +8,9 @@ type int_array = (int, Bigarray.int_elt, Bigarray.c_layout) Bigarray.Array1.t
 module Partition : sig
   include Partition.S
 
+  module With_zeros : Partition.S
   (** Compute the partitions of an integer {i n} into {i m} parts,
       including partitions where some elements are zero. *)
-  module With_zeros : Partition.S
 end
 
 (** Iterators for permutations. *)
@@ -87,4 +87,14 @@ module Combination : sig
 
     include Container.Generic with type 'a t := 'a t and type 'a elt := 'a list
   end
+end
+
+(** Iterators for compositions. *)
+module Composition : sig
+  type t
+
+  val create : n:int -> k:int -> t
+  (** Create a composition of an integer {i n} into {i k} parts. *)
+
+  include Container.S0 with type t := t and type elt := int_array
 end

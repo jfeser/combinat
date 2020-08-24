@@ -1,5 +1,5 @@
 (library
  (public_name combinat)
  (libraries base)
- (ocamlopt_flags -O3 -inlining-report -inline-max-unroll 2)
+ (ocamlopt_flags -g -O3 -inlining-report -inline-max-unroll 2)
 )

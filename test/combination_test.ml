@@ -20,6 +20,24 @@ let%expect_test "combinations" =
     (1 3 4)
     (2 3 4) |}]
 
+let%expect_test "combinations" =
+  Combination.create ~k:3 ~n:5
+  |> Combination.fold ~init:() ~f:(fun () c ->
+         Stdio.print_endline
+           (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))));
+  [%expect
+    {|
+       (0 1 2)
+       (0 1 3)
+       (0 2 3)
+       (1 2 3)
+       (0 1 4)
+       (0 2 4)
+       (1 2 4)
+       (0 3 4)
+       (1 3 4)
+       (2 3 4) |}]
+
 let%expect_test "combinations_list" =
   Combination.Of_list.create (List.init 10 ~f:(fun i -> i)) 6
   |> Combination.Of_list.iter ~f:(fun l -> [%sexp_of: int list] l |> Stdio.print_s);
