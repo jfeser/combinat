@@ -166,9 +166,9 @@ module Sorted = struct
       let fold (l, cmp) ~init ~f =
         let n = List.length l in
         let elems = List.to_array l in
-        let cmp i i' = cmp elems.(i) elems.(i') in
+        let cmp i i' = cmp elems.(i - 1) elems.(i' - 1) in
         fold (create n cmp) ~init ~f:(fun x (a, _) ->
-            f x (List.init n ~f:(fun i -> elems.(a.{i}))))
+            f x (List.init n ~f:(fun i -> elems.(a.{i} - 1))))
 
       let iter = `Define_using_fold
 
@@ -245,11 +245,15 @@ module Restricted = struct
       type 'a elt = 'a list
 
       let fold (l, filter) ~init ~f =
-        let n = List.length l in
-        let elems = List.to_array l in
-        let filter a = filter (List.init n ~f:(fun i -> elems.(a.{i}))) in
+        let n = List.length l and elems = List.to_array l in
+        let filter a =
+          let dim = Bigarray.Array1.dim a in
+          assert (dim <= n);
+          filter (List.init dim ~f:(fun i -> elems.(a.{i} - 1)))
+        in
         fold (create n filter) ~init ~f:(fun x a ->
-            f x (List.init n ~f:(fun i -> elems.(a.{i}))))
+            assert (Bigarray.Array1.dim a = n);
+            f x (List.init n ~f:(fun i -> elems.(a.{i} - 1))))
 
       let iter = `Define_using_fold
 
