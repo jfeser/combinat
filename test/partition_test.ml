@@ -1,20 +1,14 @@
 open! Base
 open! Stdio
 open! Combinat
+open Partition
 
 let print_partition ~n ~parts =
-  Partition.(
-    create ~n ~parts
-    |> iter ~f:(fun c ->
-           print_endline
-           @@ Sexp.to_string_hum ([%sexp_of: int array] (Shared.to_array c))))
+  create ~n ~parts |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c)
 
 let print_partition_z ~n ~parts =
-  Partition.With_zeros.(
-    create ~n ~parts
-    |> iter ~f:(fun c ->
-           print_endline
-           @@ Sexp.to_string_hum ([%sexp_of: int array] (Shared.to_array c))))
+  With_zeros.(
+    create ~n ~parts |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c))
 
 let%expect_test "m_partition_iter" =
   print_partition ~n:6 ~parts:2;

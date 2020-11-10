@@ -1,12 +1,10 @@
 open! Base
+open! Stdio
 open Combinat
-open Shared
+open Composition
 
 let%expect_test "compositions" =
-  Composition.create ~k:4 ~n:7
-  |> Composition.iter ~f:(fun c ->
-         Stdio.print_endline
-           (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))));
+  create ~k:4 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
   [%expect
     {|
        (1 1 1 4)
@@ -31,29 +29,49 @@ let%expect_test "compositions" =
 
 let%expect_test "compositions-2" =
   for n = 2 to 8 do
-    Composition.create ~k:2 ~n
-    |> Composition.iter ~f:(fun c ->
-           Stdio.print_endline
-             (Sexp.to_string_hum ([%sexp_of: int array] (to_array c))));
+    create ~k:2 ~n |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
     [%expect
       {|
-         (1 1 1 4)
-         (1 1 2 3)
-         (1 2 1 3)
-         (2 1 1 3)
-         (1 1 3 2)
-         (1 2 2 2)
-         (2 1 2 2)
-         (1 3 1 2)
-         (2 2 1 2)
-         (3 1 1 2)
-         (1 1 4 1)
-         (1 2 3 1)
-         (2 1 3 1)
-         (1 3 2 1)
-         (2 2 2 1)
-         (3 1 2 1)
-         (1 4 1 1)
-         (2 3 1 1)
-         (4 1 1 1) |}]
+         (* CR expect_test: Collector ran multiple times with different outputs *)
+         =========================================================================
+         (1 1)
+
+         =========================================================================
+         (1 2)
+         (2 1)
+
+         =========================================================================
+         (1 3)
+         (2 2)
+         (3 1)
+
+         =========================================================================
+         (1 4)
+         (2 3)
+         (3 2)
+         (4 1)
+
+         =========================================================================
+         (1 5)
+         (2 4)
+         (3 3)
+         (4 2)
+         (5 1)
+
+         =========================================================================
+         (1 6)
+         (2 5)
+         (3 4)
+         (4 3)
+         (5 2)
+         (6 1)
+
+         =========================================================================
+         (1 7)
+         (2 6)
+         (3 5)
+         (4 4)
+         (5 3)
+         (6 2)
+         (7 1) |}]
   done
