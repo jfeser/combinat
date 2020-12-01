@@ -44,7 +44,11 @@ include Container.Make0 (struct
     if n < k then init
     else
       let p = create int c_layout k in
-      if k = 2 then fold2 f init 1 n p
+      if k = 0 && n = 0 then f init p
+      else if k = 1 then (
+        p.{0} <- n;
+        f init p )
+      else if k = 2 then fold2 f init 1 n p
       else
         Combination.create ~n:(n - 1) ~k:(k - 1)
         |> Combination.fold ~init ~f:(fun x c ->
