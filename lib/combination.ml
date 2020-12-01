@@ -1,5 +1,6 @@
 open! Base
 open! Shared
+open Printf
 
 module Unsafe = struct
   module Bigarray = struct
@@ -17,7 +18,11 @@ end
 
 type t = { n : int; k : int }
 
-let create ~n ~k = { n; k }
+let create ~n ~k =
+  if k < 0 then failwith @@ sprintf "Combination: expected k >= 0, got k = %d" k
+  else if k > n then
+    failwith @@ sprintf "Combination: expected k < n, got k = %d and n = %d" k n
+  else { n; k }
 
 include Container.Make0 (struct
   type nonrec t = t
@@ -64,7 +69,6 @@ include Container.Make0 (struct
   let fold { n; k = t } ~init ~f =
     let open Bigarray in
     let open Array1 in
-    assert (t >= 0 && t <= n);
     if t = 0 then init
     else if t = n then f init (Array.init n ~f:(fun i -> i) |> of_array int c_layout)
     else
