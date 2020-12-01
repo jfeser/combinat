@@ -34,24 +34,30 @@ let combinations_bench =
   let module C = Combination in
   make_command
     [
-      create ~name:"combinations_naive_small" (fun () ->
-          combinations_naive 6 (List.init 10 ~f:(fun i -> i))
-          |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
-      create ~name:"combinations_list_small" (fun () ->
-          C.Of_list.(
-            create (List.init 10 ~f:(fun i -> i)) 6
-            |> iter ~f:(fun _ -> Sys.opaque_identity ())));
-      create ~name:"combinations_small" (fun () ->
-          C.(create ~k:6 ~n:10 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
-      create ~name:"combinations_naive_med" (fun () ->
-          combinations_naive 5 (List.init 25 ~f:(fun i -> i))
-          |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
-      create ~name:"combinations_list_small" (fun () ->
-          C.Of_list.(
-            create (List.init 25 ~f:(fun i -> i)) 5
-            |> iter ~f:(fun _ -> Sys.opaque_identity ())));
-      create ~name:"combinations_med" (fun () ->
-          C.(create ~k:5 ~n:25 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
+      create_group ~name:"small"
+        [
+          create ~name:"naive" (fun () ->
+              combinations_naive 6 (List.init 10 ~f:(fun i -> i))
+              |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
+          create ~name:"list" (fun () ->
+              C.Of_list.(
+                create (List.init 10 ~f:(fun i -> i)) 6
+                |> iter ~f:(fun _ -> Sys.opaque_identity ())));
+          create ~name:"std" (fun () ->
+              C.(create ~k:6 ~n:10 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
+        ];
+      create_group ~name:"med"
+        [
+          create ~name:"naive" (fun () ->
+              combinations_naive 5 (List.init 25 ~f:(fun i -> i))
+              |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
+          create ~name:"list" (fun () ->
+              C.Of_list.(
+                create (List.init 25 ~f:(fun i -> i)) 5
+                |> iter ~f:(fun _ -> Sys.opaque_identity ())));
+          create ~name:"std" (fun () ->
+              C.(create ~k:5 ~n:25 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
+        ];
       create ~name:"combinations_large" (fun () ->
           C.(create ~k:11 ~n:33 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
     ]
@@ -62,21 +68,13 @@ let permutations_bench =
   let module P = Permutation in
   make_command
     [
-      (* create_group ~name:"small"
-       *   [
-       *     create ~name:"naive" (fun () ->
-       *         permutations_naive (List.init 3 ~f:(fun i -> i))
-       *         |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
-       *     create ~name:"std" (fun () ->
-       *         Permutation.iter ~f:(fun _ -> Sys.opaque_identity ()) 3);
-       *   ]; *)
       create_group ~name:"med"
         [
           create ~name:"naive" (fun () ->
-              permutations_naive (List.init 5 ~f:(fun i -> i))
+              permutations_naive (List.init 8 ~f:(fun i -> i))
               |> List.iter ~f:(fun _ -> Sys.opaque_identity ()));
           create ~name:"std" (fun () ->
-              P.(create 5 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
+              P.(create 8 |> iter ~f:(fun _ -> Sys.opaque_identity ())));
         ];
     ]
 
@@ -113,14 +111,15 @@ let () =
         Bench.make_command
           [
             (let restrict a =
-               match Bigarray.Array1.dim a with
-               | 1 -> not (a.{0} = 2)
-               | 2 -> not (a.{0} = 1 && a.{1} = 4)
+               let ( .%{} ) = Int_array.get in
+               match Int_array.length a with
+               | 1 -> not (a.%{0} = 2)
+               | 2 -> not (a.%{0} = 1 && a.%{1} = 4)
                | 3 ->
                    not
-                     ( (a.{0} = 1 && a.{1} = 3 && a.{2} = 2)
-                     || (a.{0} = 3 && a.{1} = 1 && a.{2} = 4) )
-               | 4 -> not (a.{0} = 4 && a.{1} = 3 && a.{2} = 1 && a.{3} = 2)
+                     ( (a.%{0} = 1 && a.%{1} = 3 && a.%{2} = 2)
+                     || (a.%{0} = 3 && a.%{1} = 1 && a.%{2} = 4) )
+               | 4 -> not (a.%{0} = 4 && a.%{1} = 3 && a.%{2} = 1 && a.%{3} = 2)
                | _ -> true
              in
              Bench.Test.create ~name:"restricted_permutations_med" (fun () ->
