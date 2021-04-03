@@ -1,58 +1,15 @@
 open! Base
 open! Stdio
 open Combinat
-open Composition
+
+let print c = print_s @@ [%sexp_of: Int_array.t] c
 
 let%expect_test "compositions" =
-  create ~k:1 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
-  [%expect
-    {|
-       (1 1 1 4)
-       (1 1 2 3)
-       (1 2 1 3)
-       (2 1 1 3)
-       (1 1 3 2)
-       (1 2 2 2)
-       (2 1 2 2)
-       (1 3 1 2)
-       (2 2 1 2)
-       (3 1 1 2)
-       (1 1 4 1)
-       (1 2 3 1)
-       (2 1 3 1)
-       (1 3 2 1)
-       (2 2 2 1)
-       (3 1 2 1)
-       (1 4 1 1)
-       (2 3 1 1)
-       (4 1 1 1) |}]
+  compositions ~k:1 ~n:7 print;
+  [%expect {| (7) |}]
 
 let%expect_test "compositions" =
-  create ~k:0 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
-  [%expect
-    {|
-       (1 1 1 4)
-       (1 1 2 3)
-       (1 2 1 3)
-       (2 1 1 3)
-       (1 1 3 2)
-       (1 2 2 2)
-       (2 1 2 2)
-       (1 3 1 2)
-       (2 2 1 2)
-       (3 1 1 2)
-       (1 1 4 1)
-       (1 2 3 1)
-       (2 1 3 1)
-       (1 3 2 1)
-       (2 2 2 1)
-       (3 1 2 1)
-       (1 4 1 1)
-       (2 3 1 1)
-       (4 1 1 1) |}]
-
-let%expect_test "compositions" =
-  create ~k:4 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
+  compositions ~k:4 ~n:7 print;
   [%expect
     {|
        (1 1 1 4)
@@ -77,7 +34,7 @@ let%expect_test "compositions" =
 
 let%expect_test "compositions-2" =
   for n = 2 to 8 do
-    create ~k:2 ~n |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
+    compositions ~k:2 ~n print;
     [%expect
       {|
          (* CR expect_test: Collector ran multiple times with different outputs *)

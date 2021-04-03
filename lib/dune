@@ -1,6 +1,6 @@
 (library
  (public_name combinat)
  (libraries base)
- (preprocess (pps ppx_sexp_conv))
+ (preprocess (pps ppx_sexp_conv ppx_sexp_message ppx_compare))
  (ocamlopt_flags -g -O3 -inlining-report -inline-max-unroll 2)
 )
