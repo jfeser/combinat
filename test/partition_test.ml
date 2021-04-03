@@ -1,5 +1,3 @@
-open! Base
-open! Stdio
 open! Combinat
 
 let print c = print_s @@ [%sexp_of: Int_array.t] c

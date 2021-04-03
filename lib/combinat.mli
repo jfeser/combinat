@@ -1,5 +1,3 @@
-open Base
-
 (** Internal iterators for combinatorial objects. *)
 
 module Int_array : sig

@@ -1,5 +1,3 @@
-open! Base
-
 type args = { a : Int_array.t; a' : Int_array.t; f : Int_array.t -> unit; n : int }
 
 let[@inline] swap a x y =

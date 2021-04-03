@@ -1,5 +1,3 @@
-open! Base
-
 let rec iter2 f i n p =
   if i >= n then ()
   else (

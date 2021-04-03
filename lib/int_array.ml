@@ -1,4 +1,3 @@
-open! Base
 open Bigarray
 
 type t = (int, int_elt, c_layout) Array1.t

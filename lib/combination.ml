@@ -1,5 +1,3 @@
-open! Base
-
 type args = { c : Int_array.t; c' : Int_array.t; f : Int_array.t -> unit; t : int }
 
 let rec loop ({ c; t; _ } as args) j =

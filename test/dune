@@ -3,4 +3,5 @@
  (libraries combinat base stdio)
  (inline_tests)
  (preprocess (pps ppx_sexp_conv ppx_expect))
+ (flags :standard -open Base -open Stdio)
 )
