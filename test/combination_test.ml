@@ -1,9 +1,9 @@
 open Combinat
 
-let print c = print_s @@ [%sexp_of: Int_array.t] c
+let print c = print_s @@ [%sexp_of: int array] c
 
 let%expect_test "combinations-5-3" =
-  combinations ~k:3 ~n:5 print;
+  combinations [ 0; 1; 2; 3; 4 ] ~k:3 print;
   [%expect
     {|
     (0 1 2)
@@ -18,7 +18,7 @@ let%expect_test "combinations-5-3" =
     (2 3 4) |}]
 
 let%expect_test "combinations-5-2" =
-  combinations ~k:2 ~n:5 print;
+  combinations [ 0; 1; 2; 3; 4 ] ~k:2 print;
   [%expect
     {|
        (0 1)

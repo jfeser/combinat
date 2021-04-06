@@ -1,6 +1,6 @@
 open! Combinat
 
-let print c = print_s @@ [%sexp_of: Int_array.t] c
+let print c = print_s @@ [%sexp_of: int array] c
 
 let%expect_test "m_partition_iter" =
   partitions ~n:6 ~k:2 print;
