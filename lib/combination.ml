@@ -47,39 +47,40 @@ include Container.Make0 (struct
     if c.{j} + 1 = c.{j + 1} then loop args acc (j + 1)
     else if j <= t then (
       c.{j} <- c.{j} + 1;
-      t2 args acc (j - 1) )
+      t2 args acc (j - 1))
     else acc
 
   and t2 ({ c; c'; f; _ } as args) acc j =
     let acc = f acc c' in
     if j > 0 then (
       c.{j} <- j;
-      t2 args acc (j - 1) )
+      t2 args acc (j - 1))
     else t3 args acc
 
   and t3 ({ c; c'; f; _ } as args) acc =
     let acc =
       if c.{1} + 1 < c.{2} then (
         c.{1} <- c.{2} - 1;
-        f acc c' )
+        f acc c')
       else acc
     in
     loop args acc 2
 
   let fold { n; k = t } ~init ~f =
-    let open Bigarray in
-    let open Array1 in
+    let int = Bigarray.int and c_layout = Bigarray.c_layout in
+    let module A = Bigarray.Array1 in
     if t = 0 then init
-    else if t = n then f init (Array.init n ~f:(fun i -> i) |> of_array int c_layout)
+    else if t = n then
+      f init (Array.init n ~f:(fun i -> i) |> A.of_array int c_layout)
     else
-      let c = create int c_layout (t + 3) in
+      let c = A.create int c_layout (t + 3) in
       for i = 1 to t do
         c.{i} <- i - 1
       done;
       c.{t + 1} <- n;
       c.{t + 2} <- 0;
       let j = t in
-      let c' = sub c 1 t in
+      let c' = A.sub c 1 t in
       t2 { c; c'; f; t } init j
 
   let iter = `Define_using_fold

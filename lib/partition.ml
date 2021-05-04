@@ -53,7 +53,7 @@ module Default = struct
   let rec loop2 a x s j =
     if j > 1 then (
       a.{j} <- x;
-      loop2 a x (s - x) (j - 1) )
+      loop2 a x (s - x) (j - 1))
     else s
 
   let rec loop1 ({ a; _ } as args) acc a1m s j =
@@ -66,25 +66,25 @@ module Default = struct
     else (
       a.{1} <- a1m;
       a.{2} <- a2 + 1;
-      h2 args acc )
+      h2 args acc)
 
   and h3 ({ a; m; _ } as args) acc s j =
     if j <= m then (
       let x = a.{j} + 1 in
       a.{j} <- x;
       a.{1} <- loop2 a x s (j - 1);
-      h2 args acc )
+      h2 args acc)
     else acc
 
   let fold (n, m) ~init ~f =
-    let open Bigarray in
-    let open Array1 in
+    let module A = Bigarray.Array1 in
+    let of_array = A.of_array Bigarray.int Bigarray.c_layout in
     if n < m || (n > 0 && m = 0) then init
-    else if n = 0 then f init ((of_array int c_layout) [||])
-    else if m = 1 then f init ((of_array int c_layout) [| n |])
+    else if n = 0 then f init (of_array [||])
+    else if m = 1 then f init (of_array [| n |])
     else
-      let a = create int c_layout (m + 2) in
-      let a' = sub a 1 m in
+      let a = A.create Bigarray.int Bigarray.c_layout (m + 2) in
+      let a' = A.sub a 1 m in
       a.{1} <- n - m + 1;
       for i = 2 to m do
         a.{i} <- 1
@@ -113,12 +113,11 @@ module With_zeros = struct
     let orig_fold = fold
 
     let fold (n, m) ~init ~f =
-      let open Bigarray in
-      let open Array1 in
-      let arr = create int c_layout m in
+      let module A = Bigarray.Array1 in
+      let arr = A.create Bigarray.int Bigarray.c_layout m in
       let f acc c =
-        fill arr 0;
-        blit c (sub arr 0 (dim c));
+        A.fill arr 0;
+        A.blit c (A.sub arr 0 (A.dim c));
         f acc arr
       in
       let rec fold m' acc =

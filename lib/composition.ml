@@ -36,18 +36,18 @@ include Container.Make0 (struct
       p.{0} <- i;
       p.{1} <- n - i;
       let acc = f acc p in
-      fold2 f acc (i + 1) n p )
+      fold2 f acc (i + 1) n p)
 
   let fold { n; k } ~init ~f =
-    let open Bigarray in
-    let open Array1 in
+    let int = Bigarray.int and c_layout = Bigarray.c_layout in
+    let module A = Bigarray.Array1 in
     if n < k then init
     else
-      let p = create int c_layout k in
+      let p = A.create int c_layout k in
       if k = 0 && n = 0 then f init p
       else if k = 1 then (
         p.{0} <- n;
-        f init p )
+        f init p)
       else if k = 2 then fold2 f init 1 n p
       else
         Combination.create ~n:(n - 1) ~k:(k - 1)
