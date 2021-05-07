@@ -5,51 +5,25 @@ open Composition
 
 let%expect_test "compositions" =
   create ~k:1 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
-  [%expect
-    {|
-       (1 1 1 4)
-       (1 1 2 3)
-       (1 2 1 3)
-       (2 1 1 3)
-       (1 1 3 2)
-       (1 2 2 2)
-       (2 1 2 2)
-       (1 3 1 2)
-       (2 2 1 2)
-       (3 1 1 2)
-       (1 1 4 1)
-       (1 2 3 1)
-       (2 1 3 1)
-       (1 3 2 1)
-       (2 2 2 1)
-       (3 1 2 1)
-       (1 4 1 1)
-       (2 3 1 1)
-       (4 1 1 1) |}]
+  [%expect {|
+       (7) |}]
 
 let%expect_test "compositions" =
-  create ~k:0 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
+  create ~k:3 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
   [%expect
     {|
-       (1 1 1 4)
-       (1 1 2 3)
-       (1 2 1 3)
-       (2 1 1 3)
-       (1 1 3 2)
-       (1 2 2 2)
-       (2 1 2 2)
-       (1 3 1 2)
-       (2 2 1 2)
-       (3 1 1 2)
-       (1 1 4 1)
-       (1 2 3 1)
-       (2 1 3 1)
-       (1 3 2 1)
-       (2 2 2 1)
-       (3 1 2 1)
-       (1 4 1 1)
-       (2 3 1 1)
-       (4 1 1 1) |}]
+       (1 1 5)
+       (1 2 4)
+       (2 1 4)
+       (1 3 3)
+       (2 2 3)
+       (3 1 3)
+       (1 4 2)
+       (2 3 2)
+       (4 1 2)
+       (1 5 1)
+       (2 4 1)
+       (5 1 1) |}]
 
 let%expect_test "compositions" =
   create ~k:4 ~n:7 |> iter ~f:(fun c -> print_s @@ [%sexp_of: Int_array.t] c);
