@@ -1,122 +1,50 @@
-open Base
+(** Internal iterators for combinatorial objects.
 
-(** Internal iterators for combinatorial objects. *)
+Note: The arrays exposed by this api are mutated by the iterators. They must be
+   copied explicitly if they are to be stored elsewhere. *)
 
-module Int_array : sig
-  type t [@@deriving sexp_of]
+type +'a iter = ('a -> unit) -> unit
 
-  val length : t -> int
+val partitions : n:int -> k:int -> int array iter
+(** Iterator over the partitions of an integer {i n} into {i k} parts. *)
 
-  val get : t -> int -> int
-end
+val partitions_with_zeros : n:int -> k:int -> int array iter
+(** Iterator over the partitions of an integer {i n} into {i k} parts, including
+   partitions where some elements are zero. *)
 
-(** Iterators for integer partitions. *)
-module Partition : sig
-  type t
+val permutations : 'a list -> 'a array iter
+(** Iterator over the permutations of a set of {i n} elements. 
 
-  val create : n:int -> parts:int -> t
-  (** Create a partition of an integer {i n} into {i parts} parts. *)
+permutations ~n:3 = [[0;1;2]; [0;2;1]; [1;0;2]; [1;2;0]; [2;0;1]; [2;1;0]]
+*)
 
-  include Container.S0 with type t := t and type elt := Int_array.t
+val permutations_ordered : 'a list -> lt:('a -> 'a -> bool) -> 'a array iter
+(** Iterator over the permutations of a set of {i n} elements, including only
+   the permutations that are ordered according to a less-than relation {i
+   lt}. 
 
-  val to_list : t -> int list list
+let lt a b = a = 0 && b = 2
+permutations_ordered ~n:3 ~lt = [[0;1;2]; [0;2;1]; [1;0;2]]
+*)
 
-  (** Compute the partitions of an integer {i n} into {i m} parts,
-      including partitions where some elements are zero. *)
-  module With_zeros : sig
-    type t
+val permutations_filtered : 'a list -> f:('a array -> bool) -> 'a array iter
+(** Iterator over the permutations of a set of {i n} elements, including only
+   the permutations where {i f} is true for all prefixes. 
 
-    val create : n:int -> parts:int -> t
-    (** Create a partition of an integer {i n} into {i parts} parts. *)
+let f x = Int_array.get x 0 = 0
+permutations_filtered ~n:3 ~f = [[0;1;2]; [0;2;1]]
+*)
 
-    include Container.S0 with type t := t and type elt := Int_array.t
+val combinations : 'a list -> k:int -> 'a array iter
+(** Iterator over the combinations of size {i k} a set of {i n} elements. 
 
-    val to_list : t -> int list list
-  end
-end
+combinations ~n:4 ~k:2 = [[0;1]; [0;2]; [0;3]; [1;2]; [1;3]; [2;3]]
+*)
 
-(** Iterators for permutations. *)
-module Permutation : sig
-  type t
+val compositions : n:int -> k:int -> int array iter
+(** Iterator over the {i k} compositions of an integer {i n}. *)
 
-  val create : int -> t
-  (** Create a new permutation of {i n} elements.*)
+val subsets : 'a list -> k:int -> 'a array iter
 
-  include Container.S0 with type t := t and type elt := Int_array.t
-
-  module Of_list : sig
-    type 'a t
-
-    val create : 'a list -> 'a t
-    (** Create a new permutation of a list.*)
-
-    include Container.Generic with type 'a t := 'a t and type 'a elt := 'a list
-  end
-
-  module Sorted : sig
-    type t
-
-    val create : int -> (int -> int -> bool) -> t
-    (** Create a new permutation of {i n} elements ordered by a less-than relation. *)
-
-    include Container.S0 with type t := t and type elt := Int_array.t * Int_array.t
-
-    module Of_list : sig
-      type 'a t
-
-      val create : 'a list -> ('a -> 'a -> bool) -> 'a t
-      (** Create a new permutation of a list ordered by a less-than relation. *)
-
-      include Container.Generic with type 'a t := 'a t and type 'a elt := 'a list
-    end
-  end
-
-  module Restricted : sig
-    type t
-
-    val create : int -> (Int_array.t -> bool) -> t
-    (** Create a new permutation of {i n} elements that is filtered by a
-    function. Only orderings with a prefix that the function allows will be
-    enumerated. *)
-
-    include Container.S0 with type t := t and type elt := Int_array.t
-
-    module Of_list : sig
-      type 'a t
-
-      val create : 'a list -> ('a list -> bool) -> 'a t
-      (** Create a new permutation of a list that is filtered by a function. *)
-
-      include Container.Generic with type 'a t := 'a t and type 'a elt := 'a list
-    end
-  end
-end
-
-(** Iterators for combinations. *)
-module Combination : sig
-  type t
-
-  val create : n:int -> k:int -> t
-  (** Create a {i k}-combination of {i n} elements. *)
-
-  include Container.S0 with type t := t and type elt := Int_array.t
-
-  module Of_list : sig
-    type 'a t
-
-    val create : 'a list -> int -> 'a t
-    (** Create a {i k}-combination of a list. *)
-
-    include Container.Generic with type 'a t := 'a t and type 'a elt := 'a list
-  end
-end
-
-(** Iterators for compositions. *)
-module Composition : sig
-  type t
-
-  val create : n:int -> k:int -> t
-  (** Create a composition of an integer {i n} into {i k} parts. *)
-
-  include Container.S0 with type t := t and type elt := Int_array.t
-end
+val to_list : 'a array iter -> 'a array list
+(** Convert an iterator to a list. The arrays will be copied. *)

@@ -1,115 +1,91 @@
-open! Base
-open! Shared
-open Printf
+type args = { c : int array; mutable x : int; f : int array -> unit; t : int }
 
-module Unsafe = struct
-  module Bigarray = struct
-    include Bigarray
-
-    module Array1 = struct
-      include Bigarray.Array1
-
-      let get : int_array -> int -> int = unsafe_get
-
-      let set : int_array -> int -> int -> unit = unsafe_set
-    end
-  end
-end
-
-type t = { n : int; k : int }
-
-let create ~n ~k =
-  if k < 0 then failwith @@ sprintf "Combination: expected k >= 0, got k = %d" k
-  else if k > n then
-    failwith @@ sprintf "Combination: expected k < n, got k = %d and n = %d" k n
-  else { n; k }
-
-include Container.Make0 (struct
-  type nonrec t = t
-
-  module Elt = struct
-    type t = int_array
-
-    let equal = equal
-  end
-
-  open Unsafe
-
-  type 'a args = {
-    c : int_array;
-    c' : int_array;
-    f : 'a -> int_array -> 'a;
-    t : int;
-  }
-
-  let rec loop ({ c; t; _ } as args) acc j =
-    c.{j - 1} <- j - 2;
-    if c.{j} + 1 = c.{j + 1} then loop args acc (j + 1)
-    else if j <= t then (
-      c.{j} <- c.{j} + 1;
-      t2 args acc (j - 1))
-    else acc
-
-  and t2 ({ c; c'; f; _ } as args) acc j =
-    let acc = f acc c' in
-    if j > 0 then (
-      c.{j} <- j;
-      t2 args acc (j - 1))
-    else t3 args acc
-
-  and t3 ({ c; c'; f; _ } as args) acc =
-    let acc =
-      if c.{1} + 1 < c.{2} then (
-        c.{1} <- c.{2} - 1;
-        f acc c')
-      else acc
+module Algorithm_t = struct
+  let rec init ~n ~t f =
+    let c =
+      Array.init (t + 3) ~f:(fun j ->
+          if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
     in
-    loop args acc 2
+    let args = { c; x = 0; f; t } in
+    visit args t
 
-  let fold { n; k = t } ~init ~f =
-    let int = Bigarray.int and c_layout = Bigarray.c_layout in
-    let module A = Bigarray.Array1 in
-    if t = 0 then init
-    else if t = n then
-      f init (Array.init n ~f:(fun i -> i) |> A.of_array int c_layout)
-    else
-      let c = A.create int c_layout (t + 3) in
-      for i = 1 to t do
-        c.{i} <- i - 1
-      done;
-      c.{t + 1} <- n;
-      c.{t + 2} <- 0;
-      let j = t in
-      let c' = A.sub c 1 t in
-      t2 { c; c'; f; t } init j
+  and visit args j =
+    args.f args.c;
+    if j > 0 then (
+      args.x <- j;
+      increase args j)
+    else easy args j
 
-  let iter = `Define_using_fold
+  and easy args j =
+    let c = args.c in
+    if c.(1) + 1 < c.(2) then (
+      c.(1) <- c.(1) + 1;
+      visit args j);
+    find args 2
 
-  let length =
-    let length { n; k } = binom (n + k - 1) k in
-    `Custom length
-end)
+  and find args j =
+    let c = args.c in
+    c.(j - 1) <- j - 2;
+    args.x <- c.(j) + 1;
 
-module Of_list = struct
-  type 'a t = 'a list * int
+    let j = ref j in
+    while args.x = c.(!j + 1) do
+      j := !j + 1
+    done;
+    let j = !j in
 
-  include Build.Make (struct
-    type nonrec 'a t = 'a t
+    done_ args j
 
-    type 'a elt = 'a list
+  and done_ args j = if j > args.t then () else increase args j
 
-    let fold (l, k) ~init ~f =
-      let n = List.length l in
-      let elems = List.to_array l in
-      create ~n ~k
-      |> fold ~init ~f:(fun x a -> f x (List.init k ~f:(fun i -> elems.(a.{i}))))
-
-    let iter = `Define_using_fold
-
-    let length =
-      let length (l, k) = length (create ~n:(List.length l) ~k) in
-      `Custom length
-  end)
-
-  let create l k = (l, k)
+  and increase args j =
+    args.c.(j) <- args.x;
+    visit args (j - 1)
 end
+
+module Algorithm_l = struct
+  let rec init ~n ~t f =
+    let c =
+      Array.init (t + 3) ~f:(fun j ->
+          if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
+    in
+    let args = { c; x = 0; f; t } in
+    visit args
+
+  and visit args =
+    args.f args.c;
+    find args
+
+  and find args =
+    let c = args.c in
+    let j = ref 1 in
+    while c.(!j) + 1 = c.(!j + 1) do
+      c.(!j) <- !j - 1;
+      j := !j + 1
+    done;
+    done_ args !j
+
+  and done_ args j = if j > args.t then () else increase args j
+
+  and increase args j =
+    args.c.(j) <- args.c.(j) + 1;
+    visit args
+end
+
+let iter elems ~k:t f =
+  let n = List.length elems in
+  if t < 0 then raise_s [%message "combination: expected k >= 0" (t : int)];
+  if t > n then raise_s [%message "combination: expected k < n" (t : int) (n : int)];
+
+  let elems = Array.of_list elems in
+  let output = Array.sub elems ~pos:0 ~len:t in
+  let f a =
+    for i = 0 to t - 1 do
+      output.(i) <- elems.(a.(i + 1))
+    done;
+    f output
+  in
+
+  if t = 0 then f [||]
+  else if t = n then f (Array.init (n + 1) ~f:(fun i -> i - 1))
+  else Algorithm_l.init ~n ~t f
