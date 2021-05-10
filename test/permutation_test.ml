@@ -2,6 +2,33 @@ open Combinat
 
 let print c = print_s @@ [%sexp_of: int array] c
 
+let%expect_test "permutations-0" =
+  permutations [] print;
+  [%expect {|
+    () |}]
+
+let%expect_test "permutations-1" =
+  permutations [ 0 ] print;
+  [%expect {|
+    (0) |}]
+
+let%expect_test "permutations-2" =
+  permutations [ 0; 1 ] print;
+  [%expect {|
+    (0 1)
+    (1 0) |}]
+
+let%expect_test "permutations-3" =
+  permutations [ 0; 1; 3 ] print;
+  [%expect
+    {|
+    (0 1 3)
+    (0 3 1)
+    (1 0 3)
+    (1 3 0)
+    (3 0 1)
+    (3 1 0) |}]
+
 let%expect_test "permutations_iter" =
   permutations [ 1; 2; 3; 4 ] print;
   [%expect

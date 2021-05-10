@@ -36,7 +36,7 @@ let iter elems f =
     done;
     f output
   in
-  l1 { a; f; n }
+  if Array.is_empty elems then f [||] else l1 { a; f; n }
 
 (* let iter_ordered ~n ~lt f =
  *   let ( << ) x y =

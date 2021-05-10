@@ -5,7 +5,7 @@ type args = { a : int array; a' : int array; f : int array -> unit; m : int }
 let rec loop2 a x s j =
   if j > 1 then (
     a.(j) <- x;
-    loop2 a x (s - x) (j - 1) )
+    loop2 a x (s - x) (j - 1))
   else s
 
 let rec loop1 ({ a; _ } as args) a1m s j : unit =
@@ -20,20 +20,23 @@ and h2 ({ a; a'; f; m } as args) : unit =
   else (
     a.(1) <- a1m;
     a.(2) <- a2 + 1;
-    h2 args )
+    h2 args)
 
 and h3 ({ a; m; _ } as args) s j : unit =
   if j <= m then (
     let x = a.(j) + 1 in
     a.(j) <- x;
     a.(1) <- loop2 a x s (j - 1);
-    h2 args )
+    h2 args)
 
-let iter ~n ~k:m f =
-  if n < m || (n > 0 && m = 0) then ()
-  else if n = 0 then f [||]
-  else if m = 1 then f [| n |]
-  else
+let iter ~n ~k f =
+  if n < 0 then raise_s [%message "partition: expected n >= 0" (n : int)];
+  if k < 0 then raise_s [%message "partition: expected k >= 0" (k : int)];
+
+  if n = 0 && k = 0 then f [||]
+  else if n > 0 && k = 1 then f [| n |]
+  else if n > 0 && k > 1 && k <= n then (
+    let m = k in
     let a = Array.create ~len:(m + 2) 0 in
     let a' = Array.create ~len:m 0 in
     a.(1) <- n - m + 1;
@@ -41,9 +44,13 @@ let iter ~n ~k:m f =
       a.(i) <- 1
     done;
     a.(m + 1) <- -1;
-    h2 { a; a'; f; m }
+    h2 { a; a'; f; m })
 
-let iter_with_zeros ~n ~k:m f =
+let iter_with_zeros ~n ~k f =
+  if n < 0 then raise_s [%message "partition_with_zeros: expected n >= 0" (n : int)];
+  if k < 0 then raise_s [%message "partition_with_zeros: expected k >= 0" (k : int)];
+
+  let m = k in
   let output = Array.create ~len:m 0 in
   let f c =
     Array.blit ~src:c ~src_pos:0 ~dst:output ~dst_pos:0 ~len:(Array.length c);
