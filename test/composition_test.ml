@@ -7,6 +7,35 @@ let%expect_test "compositions" =
   [%expect {| (7) |}]
 
 let%expect_test "compositions" =
+  compositions ~k:2 ~n:7 print;
+  [%expect {|
+    (1 6)
+    (2 5)
+    (3 4)
+    (4 3)
+    (5 2)
+    (6 1) |}]
+
+let%expect_test "compositions" =
+  compositions ~k:3 ~n:7 print;
+  [%expect {|
+    (1 1 5)
+    (1 2 4)
+    (2 1 4)
+    (1 3 3)
+    (2 2 3)
+    (3 1 3)
+    (1 4 2)
+    (2 3 2)
+    (3 2 2)
+    (4 1 2)
+    (1 5 1)
+    (2 4 1)
+    (3 3 1)
+    (4 2 1)
+    (5 1 1) |}]
+
+let%expect_test "compositions" =
   compositions ~k:4 ~n:7 print;
   [%expect
     {|
@@ -28,7 +57,45 @@ let%expect_test "compositions" =
        (3 1 2 1)
        (1 4 1 1)
        (2 3 1 1)
+       (3 2 1 1)
        (4 1 1 1) |}]
+
+let%expect_test "compositions" =
+  compositions ~k:5 ~n:7 print;
+  [%expect
+    {|
+       (1 1 1 1 3)
+       (1 1 1 2 2)
+       (1 1 2 1 2)
+       (1 2 1 1 2)
+       (2 1 1 1 2)
+       (1 1 1 3 1)
+       (1 1 2 2 1)
+       (1 2 1 2 1)
+       (2 1 1 2 1)
+       (1 1 3 1 1)
+       (1 2 2 1 1)
+       (2 1 2 1 1)
+       (1 3 1 1 1)
+       (2 2 1 1 1)
+       (3 1 1 1 1) |}]
+
+let%expect_test "compositions" =
+  compositions ~k:6 ~n:7 print;
+  [%expect
+    {|
+     (1 1 1 1 1 2)
+     (1 1 1 1 2 1)
+     (1 1 1 2 1 1)
+     (1 1 2 1 1 1)
+     (1 2 1 1 1 1)
+     (2 1 1 1 1 1) |}]
+
+let%expect_test "compositions" =
+  compositions ~k:7 ~n:7 print;
+  [%expect
+    {|
+       (1 1 1 1 1 1 1) |}]
 
 let%expect_test "compositions-2" =
   for n = 2 to 8 do
