@@ -4,11 +4,11 @@ let combinations = Combination.iter
 
 let permutations = Permutation.iter
 
-let permutations_ordered _ = failwith ""
+let permutations_ordered _ = assert false
 
 (* Permutation.iter_ordered *)
 
-let permutations_filtered _ = failwith ""
+let permutations_filtered _ = assert false
 
 (* Permutation.iter_filtered *)
 
@@ -18,4 +18,4 @@ let partitions_with_zeros = Partition.iter_with_zeros
 
 let compositions = Composition.iter
 
-let subsets ~n:_ ~k:_ = failwith ""
+let subsets _ ~k:_ = failwith ""

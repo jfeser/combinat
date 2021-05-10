@@ -2,35 +2,34 @@ open Combinat
 
 let print c = print_s @@ [%sexp_of: int array] c
 
-(* let%expect_test "permutations_iter" =
- *   Of_list.(
- *     iter (create [ 1; 2; 3; 4 ]) ~f:(fun c -> print_s @@ [%sexp_of: int list] c));
- *   [%expect
- *     {|
- *     (1 2 3 4)
- *     (1 2 4 3)
- *     (1 3 2 4)
- *     (1 3 4 2)
- *     (1 4 2 3)
- *     (1 4 3 2)
- *     (2 1 3 4)
- *     (2 1 4 3)
- *     (2 3 1 4)
- *     (2 3 4 1)
- *     (2 4 1 3)
- *     (2 4 3 1)
- *     (3 1 2 4)
- *     (3 1 4 2)
- *     (3 2 1 4)
- *     (3 2 4 1)
- *     (3 4 1 2)
- *     (3 4 2 1)
- *     (4 1 2 3)
- *     (4 1 3 2)
- *     (4 2 1 3)
- *     (4 2 3 1)
- *     (4 3 1 2)
- *     (4 3 2 1) |}] *)
+let%expect_test "permutations_iter" =
+  permutations [ 1; 2; 3; 4 ] print;
+  [%expect
+    {|
+    (1 2 3 4)
+    (1 2 4 3)
+    (1 3 2 4)
+    (1 3 4 2)
+    (1 4 2 3)
+    (1 4 3 2)
+    (2 1 3 4)
+    (2 1 4 3)
+    (2 3 1 4)
+    (2 3 4 1)
+    (2 4 1 3)
+    (2 4 3 1)
+    (3 1 2 4)
+    (3 1 4 2)
+    (3 2 1 4)
+    (3 2 4 1)
+    (3 4 1 2)
+    (3 4 2 1)
+    (4 1 2 3)
+    (4 1 3 2)
+    (4 2 1 3)
+    (4 2 3 1)
+    (4 3 1 2)
+    (4 3 2 1) |}]
 
 (* let%expect_test "sorted_permutations_iter" =
  *   let lt x y = match (x, y) with 1, 3 | 2, 3 | 2, 4 -> true | _ -> false in
@@ -103,31 +102,31 @@ let print c = print_s @@ [%sexp_of: int array] c
  *     (1 4 6 2 5 8 3 7 9)
  *     (1 4 7 2 5 8 3 6 9) |}] *)
 
-let%expect_test "restricted_permutations_iter" =
-  let f a =
-    match Array.length a with
-    | 1 -> not (a.(0) = 2)
-    | 2 -> not (a.(0) = 1 && a.(1) = 4)
-    | 3 ->
-        not
-          ( (a.(0) = 1 && a.(1) = 3 && a.(2) = 2)
-          || (a.(0) = 3 && a.(1) = 1 && a.(2) = 4) )
-    | 4 -> not (a.(0) = 4 && a.(1) = 3 && a.(2) = 1 && a.(3) = 2)
-    | _ -> true
-  in
-  permutations_filtered [ 1; 2; 3; 4 ] ~f print;
-  [%expect
-    {|
-    (1 2 3 4)
-    (1 2 4 3)
-    (1 3 4 2)
-    (3 1 2 4)
-    (3 2 1 4)
-    (3 2 4 1)
-    (3 4 1 2)
-    (3 4 2 1)
-    (4 1 2 3)
-    (4 1 3 2)
-    (4 2 1 3)
-    (4 2 3 1)
-    (4 3 2 1) |}]
+(* let%expect_test "restricted_permutations_iter" =
+ *   let f a =
+ *     match Array.length a with
+ *     | 1 -> not (a.(0) = 2)
+ *     | 2 -> not (a.(0) = 1 && a.(1) = 4)
+ *     | 3 ->
+ *         not
+ *           ( (a.(0) = 1 && a.(1) = 3 && a.(2) = 2)
+ *           || (a.(0) = 3 && a.(1) = 1 && a.(2) = 4) )
+ *     | 4 -> not (a.(0) = 4 && a.(1) = 3 && a.(2) = 1 && a.(3) = 2)
+ *     | _ -> true
+ *   in
+ *   permutations_filtered [ 1; 2; 3; 4 ] ~f print;
+ *   [%expect
+ *     {|
+ *     (1 2 3 4)
+ *     (1 2 4 3)
+ *     (1 3 4 2)
+ *     (3 1 2 4)
+ *     (3 2 1 4)
+ *     (3 2 4 1)
+ *     (3 4 1 2)
+ *     (3 4 2 1)
+ *     (4 1 2 3)
+ *     (4 1 3 2)
+ *     (4 2 1 3)
+ *     (4 2 3 1)
+ *     (4 3 2 1) |}] *)

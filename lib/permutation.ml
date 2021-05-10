@@ -14,7 +14,7 @@ let rec loop2 a j l = if a.(j) >= a.(l) then loop2 a j (l - 1) else l
 let rec loop3 a k l =
   if k < l then (
     swap a k l;
-    loop3 a (k + 1) (l - 1) )
+    loop3 a (k + 1) (l - 1))
 
 let rec l1 ({ a; f; n } as args) =
   f a;
@@ -23,7 +23,7 @@ let rec l1 ({ a; f; n } as args) =
     let l = loop2 a j n in
     swap a j l;
     loop3 a (j + 1) n;
-    l1 args )
+    l1 args)
 
 let iter elems f =
   let n = List.length elems in
