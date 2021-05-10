@@ -1,46 +1,91 @@
-type args = { c : int array; f : int array -> unit; t : int }
+type args = { c : int array; mutable x : int; f : int array -> unit; t : int }
 
-let rec loop ({ c; t; _ } as args) j =
-  c.(j - 1) <- j - 2;
-  if c.(j) + 1 = c.(j + 1) then loop args (j + 1)
-  else if j <= t then (
-    c.(j) <- c.(j) + 1;
-    t2 args (j - 1))
+module Algorithm_t = struct
+  let rec init ~n ~t f =
+    let c =
+      Array.init (t + 3) ~f:(fun j ->
+          if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
+    in
+    let args = { c; x = 0; f; t } in
+    visit args t
 
-and t2 ({ c; f; _ } as args) j =
-  f c;
-  if j > 0 then (
-    c.(j) <- j;
-    t2 args (j - 1))
-  else t3 args
+  and visit args j =
+    args.f args.c;
+    if j > 0 then (
+      args.x <- j;
+      increase args j)
+    else easy args j
 
-and t3 ({ c; f; _ } as args) =
-  if c.(1) + 1 < c.(2) then (
-    c.(1) <- c.(2) - 1;
-    f c);
-  loop args 2
+  and easy args j =
+    let c = args.c in
+    if c.(1) + 1 < c.(2) then (
+      c.(1) <- c.(1) + 1;
+      visit args j);
+    find args 2
 
-let iter elems ~k f =
+  and find args j =
+    let c = args.c in
+    c.(j - 1) <- j - 2;
+    args.x <- c.(j) + 1;
+
+    let j = ref j in
+    while args.x = c.(!j + 1) do
+      j := !j + 1
+    done;
+    let j = !j in
+
+    done_ args j
+
+  and done_ args j = if j > args.t then () else increase args j
+
+  and increase args j =
+    args.c.(j) <- args.x;
+    visit args (j - 1)
+end
+
+module Algorithm_l = struct
+  let rec init ~n ~t f =
+    let c =
+      Array.init (t + 3) ~f:(fun j ->
+          if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
+    in
+    let args = { c; x = 0; f; t } in
+    visit args
+
+  and visit args =
+    args.f args.c;
+    find args
+
+  and find args =
+    let c = args.c in
+    let j = ref 1 in
+    while c.(!j) + 1 = c.(!j + 1) do
+      c.(!j) <- !j - 1;
+      j := !j + 1
+    done;
+    done_ args !j
+
+  and done_ args j = if j > args.t then () else increase args j
+
+  and increase args j =
+    args.c.(j) <- args.c.(j) + 1;
+    visit args
+end
+
+let iter elems ~k:t f =
   let n = List.length elems in
-  if k < 0 then raise_s [%message "combination: expected k >= 0" (k : int)];
-  if k > n then raise_s [%message "combination: expected k < n" (k : int) (n : int)];
+  if t < 0 then raise_s [%message "combination: expected k >= 0" (t : int)];
+  if t > n then raise_s [%message "combination: expected k < n" (t : int) (n : int)];
 
   let elems = Array.of_list elems in
-  let output = Array.sub elems ~pos:0 ~len:k in
+  let output = Array.sub elems ~pos:0 ~len:t in
   let f a =
-    for i = 1 to k - 1 do
-      output.(i) <- elems.(a.(i))
+    for i = 0 to t - 1 do
+      output.(i) <- elems.(a.(i + 1))
     done;
     f output
   in
 
-  if k = 0 then ()
-  else if k = n then f (Array.init n ~f:(fun i -> i))
-  else
-    let c = Array.create ~len:(k + 3) 0 in
-    for i = 1 to k do
-      c.(i) <- i - 1
-    done;
-    c.(k + 1) <- n;
-    c.(k + 2) <- 0;
-    t2 { c; f; t = k } k
+  if t = 0 then f [||]
+  else if t = n then f (Array.init (n + 1) ~f:(fun i -> i - 1))
+  else Algorithm_l.init ~n ~t f
