@@ -32,7 +32,7 @@ let iter elems f =
   let output = Array.copy elems in
   let f a =
     for i = 0 to n - 1 do
-      output.(i) <- elems.(a.(i))
+      output.(i) <- elems.(a.(i + 1))
     done;
     f output
   in
