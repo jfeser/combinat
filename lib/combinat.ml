@@ -6,6 +6,8 @@ let permutations = Permutation.iter
 
 let sequences = Sequence.iter
 
+let sequences_restricted = Sequence.iter_restricted
+
 let permutations_ordered _ = assert false
 
 (* Permutation.iter_ordered *)

@@ -37,6 +37,8 @@ permutations_filtered ~n:3 ~f = [[0;1;2]; [0;2;1]]
 
 val sequences : 'a list -> k:int -> 'a array iter
 
+val sequences_restricted : 'a list list -> 'a array iter
+
 val combinations : 'a list -> k:int -> 'a array iter
 (** Iterator over the combinations of size {i k} a set of {i n} elements. 
 
