@@ -4,6 +4,8 @@ let combinations = Combination.iter
 
 let permutations = Permutation.iter
 
+let sequences = Sequence.iter
+
 let permutations_ordered _ = assert false
 
 (* Permutation.iter_ordered *)
