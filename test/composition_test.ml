@@ -2,20 +2,21 @@ open Combinat
 
 let print c = print_s @@ [%sexp_of: int array] c
 
-let%expect_test "compositions-n<k" =
-  require_does_raise [%here] (fun () -> compositions ~k:3 ~n:2 ignore);
-  [%expect {|
-    ("composition: expected k <= n"
-      (k 3)
-      (n 2)) |}]
-
 let%expect_test "compositions-n<0" =
   require_does_raise [%here] (fun () -> compositions ~k:(-2) ~n:(-1) ignore);
-  [%expect {| ("composition: expected k >= 0" (k -2)) |}]
+  [%expect {| ("composition: expected n >= 0" (n -1)) |}]
 
 let%expect_test "compositions-k<0" =
   require_does_raise [%here] (fun () -> compositions ~k:(-1) ~n:2 ignore);
   [%expect {| ("composition: expected k >= 0" (k -1)) |}]
+
+let%expect_test "compositions" =
+  compositions ~k:0 ~n:0 print;
+  [%expect {| () |}]
+
+let%expect_test "compositions" =
+  compositions ~k:0 ~n:7 print;
+  [%expect {| |}]
 
 let%expect_test "compositions" =
   compositions ~k:1 ~n:7 print;
