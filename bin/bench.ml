@@ -28,50 +28,41 @@ let rec permutations_naive = function
         ~f:(fun acc x -> List.rev_append (distribute hd x) acc)
         ~init:[] (permutations_naive tl)
 
-let combinations_bench =
-  let open Bench in
-  let open Test in
-  let naive ~n ~k = combinations_naive k (List.init n ~f:(fun i -> i))
-  and std ~n ~k = combinations (List.init n ~f:Fun.id) ~k ignore in
-  make_command
-    [
-      create_group ~name:"small"
-        [
-          create ~name:"naive" (fun () -> naive ~n:10 ~k:6);
-          create ~name:"std" (fun () -> std ~n:10 ~k:6);
-        ];
-      create_group ~name:"med"
-        [
-          create ~name:"naive" (fun () -> naive ~n:25 ~k:10);
-          create ~name:"std" (fun () -> std ~n:25 ~k:10);
-        ];
-    ]
+let combinations_naive ~n ~k = combinations_naive k (List.init n ~f:(fun i -> i))
+let combinations_std ~n ~k = combinations (List.init n ~f:Fun.id) ~k ignore
+let permutations_naive n = permutations_naive (List.init n ~f:(fun i -> i))
+let permutations_std n = permutations (List.init n ~f:(fun i -> i)) ignore
 
-let permutations_bench =
-  let open Bench in
-  let open Test in
-  let naive n = permutations_naive (List.init n ~f:(fun i -> i))
-  and std n = permutations (List.init n ~f:(fun i -> i)) ignore in
-  make_command
-    [
-      create_group ~name:"med"
-        [
-          create ~name:"naive" (fun () -> naive 8);
-          create ~name:"std" (fun () -> std 8);
-        ];
-    ]
+let tests =
+  let open Bench.Test in
+  [
+    create_group ~name:"combinations/small"
+      [
+        create ~name:"naive" (fun () -> combinations_naive ~n:10 ~k:6);
+        create ~name:"std" (fun () -> combinations_std ~n:10 ~k:6);
+      ];
+    create_group ~name:"combinations/med"
+      [
+        create ~name:"naive" (fun () -> combinations_naive ~n:25 ~k:10);
+        create ~name:"std" (fun () -> combinations_std ~n:25 ~k:10);
+      ];
+    create ~name:"partitions/std" (fun () -> partitions ~n:65 ~k:20);
+  ]
 
-let partitions_bench =
-  let open Bench in
-  let open Test in
-  let std ~n ~k = partitions ~n ~k ignore in
-  make_command [ create ~name:"std" (fun () -> std ~n:65 ~k:20) ]
+let run ~matching (analysis_configs, display_config, config) =
+  match config with
+  | `Run (save_to_file, run_config) -> ()
+  | _ -> failwith "unsupported"
 
 let () =
-  Command.group ~summary:"combinat benchmarks"
-    [
-      ("combinations", combinations_bench);
-      ("permutations", permutations_bench);
-      ("partitions", partitions_bench);
-    ]
-  |> Command.run
+  let open Command.Let_syntax in
+  let param =
+    [%map_open
+      let matching =
+        flag "matching"
+          (optional_with_default "." string)
+          ~doc:"REGEX Run benchmarks matching the REGEX."
+      in
+      run ~matching]
+  in
+  Bench.make_command_ext ~summary:"run combinat benchmarks" param |> Command.run

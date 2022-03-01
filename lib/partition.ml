@@ -14,7 +14,7 @@ let rec loop1 ({ a; _ } as args) a1m s j : unit =
 
 and h2 ({ a; a'; f; m } as args) : unit =
   Array.blit ~src:a ~src_pos:1 ~dst:a' ~dst_pos:0 ~len:m;
-  f a';
+  f @@ Array.copy a';
   let a1m = a.(1) - 1 and a2 = a.(2) in
   if a2 >= a1m then loop1 args a1m (a1m + a2) 3
   else (
@@ -54,7 +54,7 @@ let iter_with_zeros ~n ~k f =
   let output = Array.create ~len:m 0 in
   let f c =
     Array.blit ~src:c ~src_pos:0 ~dst:output ~dst_pos:0 ~len:(Array.length c);
-    f output
+    f @@ Array.copy output
   in
   for k' = 0 to m do
     iter ~n ~k:k' f

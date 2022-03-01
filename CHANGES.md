@@ -4,7 +4,6 @@
  - Added Of_list modules.
  - Added sorted and filtered permutation iterators.
 
-
 ## 1.0 (2019-03-04)
 
 Initial release.

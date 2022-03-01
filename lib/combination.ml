@@ -10,7 +10,7 @@ module Algorithm_t = struct
     visit args t
 
   and visit args j =
-    args.f args.c;
+    args.f @@ Array.copy args.c;
     if j > 0 then (
       args.x <- j;
       increase args j)
@@ -53,7 +53,7 @@ module Algorithm_l = struct
     visit args
 
   and visit args =
-    args.f args.c;
+    args.f @@ Array.copy args.c;
     find args
 
   and find args =
@@ -83,7 +83,7 @@ let iter elems ~k:t f =
     for i = 0 to t - 1 do
       output.(i) <- elems.(a.(i + 1))
     done;
-    f output
+    f @@ Array.copy output
   in
 
   if t = 0 then f [||]

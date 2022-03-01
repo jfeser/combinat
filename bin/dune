@@ -1,5 +1,6 @@
 (executable
  (name bench)
  (libraries core_bench combinat)
+ (preprocess (pps ppx_let))
  (flags -unsafe)
  (modules bench))

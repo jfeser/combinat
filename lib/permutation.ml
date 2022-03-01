@@ -17,7 +17,7 @@ let rec loop3 a k l =
     loop3 a (k + 1) (l - 1))
 
 let rec l1 ({ a; f; n } as args) =
-  f a;
+  f @@ Array.copy a;
   let j = loop1 a (n - 1) in
   if j > 0 then (
     let l = loop2 a j n in
@@ -34,7 +34,7 @@ let iter elems f =
     for i = 0 to n - 1 do
       output.(i) <- elems.(a.(i + 1))
     done;
-    f output
+    f @@ Array.copy output
   in
   if Array.is_empty elems then f [||] else l1 { a; f; n }
 

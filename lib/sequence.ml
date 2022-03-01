@@ -12,8 +12,10 @@ and carry a l f j =
 
 let iter_restricted elems f =
   let k = List.length elems in
+
+  (* an empty list means that there are no valid entries for an index *)
   if List.exists elems ~f:List.is_empty then ()
-  else if k = 0 then f [||]
+  else if k = 0 then f [||] (* there is only one empty sequence *)
   else
     let elems = Array.of_list @@ List.map ~f:Array.of_list elems in
     let a = Array.create ~len:k 0 and l = Array.map elems ~f:Array.length in

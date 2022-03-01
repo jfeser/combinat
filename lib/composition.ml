@@ -25,4 +25,4 @@ let iter ~n ~k f =
         p.(i) <- c.(i) - c.(i - 1)
       done;
       p.(k - 1) <- n - 1 - c.(k - 2);
-      f p)
+      f @@ Array.copy p)
