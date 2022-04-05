@@ -1,4 +1,4 @@
-(lang dune 2.0)
+(lang dune 2.7)
 (name combinat)
 (source (github jfeser/combinat))
 (documentation https://jfeser.github.io/combinat/combinat/index.html)
@@ -13,7 +13,7 @@
 permutations, combinations, and integer partitions.")
   (depends
     (ocaml (>= 4.08))
-    (dune (>= 2))
+    dune
     (core (and :with-test (>= v0.15)))
     (expect_test_helpers_core (and :with-test (>= v0.15)))
     (ppx_jane (and :with-test (>= v0.15)))

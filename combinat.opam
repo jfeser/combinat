@@ -12,15 +12,16 @@ doc: "https://jfeser.github.io/combinat/combinat/index.html"
 bug-reports: "https://github.com/jfeser/combinat/issues"
 depends: [
   "ocaml" {>= "4.08"}
-  "dune" {>= "2"}
+  "dune" {>= "2.7"}
   "core" {with-test & >= "v0.15"}
   "expect_test_helpers_core" {with-test & >= "v0.15"}
   "ppx_jane" {with-test & >= "v0.15"}
   "core_bench" {with-test & >= "v0.15"}
   "core_unix" {with-test & >= "v0.15"}
+  "odoc" {with-doc}
 ]
 build: [
-  ["dune" "subst"] {pinned}
+  ["dune" "subst"] {dev}
   [
     "dune"
     "build"
