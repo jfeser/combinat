@@ -4,11 +4,11 @@ let print c = print_s @@ [%sexp_of: int array] c
 
 let%expect_test "compositions-n<0" =
   require_does_raise [%here] (fun () -> compositions ~k:(-2) ~n:(-1) ignore);
-  [%expect {| ("composition: expected n >= 0" (n -1)) |}]
+  [%expect {| (Failure "composition: expected n >= 0, got n=-1") |}]
 
 let%expect_test "compositions-k<0" =
   require_does_raise [%here] (fun () -> compositions ~k:(-1) ~n:2 ignore);
-  [%expect {| ("composition: expected k >= 0" (k -1)) |}]
+  [%expect {| (Failure "composition: expected k >= 0, got k=-1") |}]
 
 let%expect_test "compositions" =
   compositions ~k:0 ~n:0 print;

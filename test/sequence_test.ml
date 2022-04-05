@@ -4,7 +4,7 @@ open Shared
 let%expect_test "sequences-k<0" =
   require_does_raise [%here] (fun () -> sequences [ 0; 1; 2 ] ~k:(-1) ignore);
   [%expect {|
-    ("sequences: expected k >= 0" (k -1)) |}]
+    (Failure "sequences: expected k >= 0, got k=-1") |}]
 
 let%expect_test "sequences-0-0" =
   sequences [] ~k:0 print;
@@ -28,6 +28,20 @@ let%expect_test "sequences-5-1" =
     (2)
     (3)
     (4) |}]
+
+let%expect_test "sequences-3-2" =
+  sequences [ 0; 1; 2 ] ~k:2 print;
+  [%expect
+    {|
+    (0 0)
+    (0 1)
+    (0 2)
+    (1 0)
+    (1 1)
+    (1 2)
+    (2 0)
+    (2 1)
+    (2 2) |}]
 
 let%expect_test "sequences-5-2" =
   sequences [ 0; 1; 2; 3; 4 ] ~k:2 print;

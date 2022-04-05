@@ -7,10 +7,10 @@ let rec iter2 f i n p =
     iter2 f (i + 1) n p)
 
 let iter ~n ~k f =
-  if n < 0 then raise_s [%message "composition: expected n >= 0" (n : int)];
-  if k < 0 then raise_s [%message "composition: expected k >= 0" (k : int)];
+  if n < 0 then failwith (Printf.sprintf "composition: expected n >= 0, got n=%d" n);
+  if k < 0 then failwith (Printf.sprintf "composition: expected k >= 0, got k=%d" k);
 
-  let p = Array.create ~len:k 0 in
+  let p = Array.make k 0 in
   if k = 0 then if n = 0 then f p else ()
   else if n >= k then (
     if k = 1 then (
@@ -18,7 +18,7 @@ let iter ~n ~k f =
       f p)
     else if k = 2 then iter2 f 1 n p
     else
-      let elems = List.init (n - 1) ~f:Fn.id in
+      let elems = List.init (n - 1) Fun.id in
       Combination.iter elems ~k:(k - 1) @@ fun c ->
       p.(0) <- c.(0) + 1;
       for i = 1 to k - 2 do

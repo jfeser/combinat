@@ -49,20 +49,5 @@ let tests =
     create ~name:"partitions/std" (fun () -> partitions ~n:65 ~k:20);
   ]
 
-let run ~matching (analysis_configs, display_config, config) =
-  match config with
-  | `Run (save_to_file, run_config) -> ()
-  | _ -> failwith "unsupported"
-
-let () =
-  let open Command.Let_syntax in
-  let param =
-    [%map_open
-      let matching =
-        flag "matching"
-          (optional_with_default "." string)
-          ~doc:"REGEX Run benchmarks matching the REGEX."
-      in
-      run ~matching]
-  in
-  Bench.make_command_ext ~summary:"run combinat benchmarks" param |> Command.run
+let cmd = Bench.make_command tests
+let () = Command_unix.run cmd

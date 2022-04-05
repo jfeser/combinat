@@ -5,15 +5,13 @@ let print c = print_s @@ [%sexp_of: int array] c
 let%expect_test "combinations-n<k" =
   require_does_raise [%here] (fun () -> combinations [ 0; 1; 2; 3; 4 ] ~k:6 ignore);
   [%expect {|
-    ("combination: expected k < n"
-      (t 6)
-      (n 5)) |}]
+    (Failure "combination: expected k < n, got k=6 n=5") |}]
 
 let%expect_test "combinations-k<0" =
   require_does_raise [%here] (fun () ->
       combinations [ 0; 1; 2; 3; 4 ] ~k:(-1) ignore);
   [%expect {|
-    ("combination: expected k >= 0" (t -1)) |}]
+    (Failure "combination: expected k >= 0, got -1") |}]
 
 let%expect_test "combinations-5-5" =
   combinations [ 0; 1; 2; 3; 4 ] ~k:5 print;

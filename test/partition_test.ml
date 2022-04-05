@@ -5,12 +5,12 @@ let print c = print_s @@ [%sexp_of: int array] c
 let%expect_test "partition-n<0" =
   require_does_raise [%here] (fun () -> partitions ~n:(-1) ~k:(-2) ignore);
   [%expect {|
-    ("partition: expected n >= 0" (n -1)) |}]
+    (Failure "partition: expected n >= 0, got n=-1") |}]
 
 let%expect_test "partition-k<0" =
   require_does_raise [%here] (fun () -> partitions ~n:2 ~k:(-1) ignore);
   [%expect {|
-    ("partition: expected k >= 0" (k -1)) |}]
+    (Failure "partition: expected k >= 0, got k=-1") |}]
 
 let%expect_test "partitions" =
   partitions ~n:0 ~k:0 print;
@@ -469,19 +469,20 @@ let%expect_test "partitions" =
 let%expect_test "partitions_with_zeros n<0" =
   require_does_raise [%here] (fun () -> partitions_with_zeros ~n:(-1) ~k:(-2) ignore);
   [%expect {|
-    ("partition_with_zeros: expected n >= 0" (n -1)) |}]
+    (Failure "partition_with_zeros: expected n >= 0, got n=-1") |}]
 
 let%expect_test "partitions_with_zeros k<0" =
   require_does_raise [%here] (fun () -> partitions_with_zeros ~n:2 ~k:(-1) ignore);
   [%expect {|
-    ("partition_with_zeros: expected k >= 0" (k -1)) |}]
+    (Failure "partition_with_zeros: expected k >= 0, got k=-1") |}]
 
 let%expect_test "partitions_with_zeros" =
   for n = 1 to 6 do
     for k = 1 to n + 2 do
       print_s [%message (n : int) (k : int)];
       partitions_with_zeros ~n ~k print;
-      [%expect {|
+      [%expect
+        {|
         (* CR expect_test: Collector ran multiple times with different outputs *)
         =========================================================================
         ((n 1)

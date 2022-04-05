@@ -3,7 +3,7 @@ type args = { c : int array; mutable x : int; f : int array -> unit; t : int }
 module Algorithm_t = struct
   let rec init ~n ~t f =
     let c =
-      Array.init (t + 3) ~f:(fun j ->
+      Array.init (t + 3) (fun j ->
           if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
     in
     let args = { c; x = 0; f; t } in
@@ -46,7 +46,7 @@ end
 module Algorithm_l = struct
   let rec init ~n ~t f =
     let c =
-      Array.init (t + 3) ~f:(fun j ->
+      Array.init (t + 3) (fun j ->
           if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
     in
     let args = { c; x = 0; f; t } in
@@ -74,11 +74,12 @@ end
 
 let iter elems ~k:t f =
   let n = List.length elems in
-  if t < 0 then raise_s [%message "combination: expected k >= 0" (t : int)];
-  if t > n then raise_s [%message "combination: expected k < n" (t : int) (n : int)];
+  if t < 0 then failwith (Printf.sprintf "combination: expected k >= 0, got %d" t);
+  if t > n then
+    failwith (Printf.sprintf "combination: expected k < n, got k=%d n=%d" t n);
 
   let elems = Array.of_list elems in
-  let output = Array.sub elems ~pos:0 ~len:t in
+  let output = Array.sub elems 0 t in
   let f a =
     for i = 0 to t - 1 do
       output.(i) <- elems.(a.(i + 1))
@@ -87,5 +88,5 @@ let iter elems ~k:t f =
   in
 
   if t = 0 then f [||]
-  else if t = n then f (Array.init (n + 1) ~f:(fun i -> i - 1))
+  else if t = n then f (Array.init (n + 1) (fun i -> i - 1))
   else Algorithm_l.init ~n ~t f

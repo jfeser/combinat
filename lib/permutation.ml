@@ -1,5 +1,3 @@
-open! Base
-
 type 'a args = { a : int array; f : int array -> unit; n : int }
 
 let[@inline] swap a x y =
@@ -8,7 +6,6 @@ let[@inline] swap a x y =
   a.(y) <- tmp
 
 let rec loop1 a j = if a.(j) >= a.(j + 1) then loop1 a (j - 1) else j
-
 let rec loop2 a j l = if a.(j) >= a.(l) then loop2 a j (l - 1) else l
 
 let rec loop3 a k l =
@@ -28,7 +25,7 @@ let rec l1 ({ a; f; n } as args) =
 let iter elems f =
   let n = List.length elems in
   let elems = Array.of_list elems in
-  let a = Array.init ~f:(fun i -> if i = 0 then n - 2 else i - 1) (n + 1) in
+  let a = Array.init (n + 1) (fun i -> if i = 0 then n - 2 else i - 1) in
   let output = Array.copy elems in
   let f a =
     for i = 0 to n - 1 do
@@ -36,7 +33,7 @@ let iter elems f =
     done;
     f @@ Array.copy output
   in
-  if Array.is_empty elems then f [||] else l1 { a; f; n }
+  if Array.length elems = 0 then f [||] else l1 { a; f; n }
 
 (* let iter_ordered ~n ~lt f =
  *   let ( << ) x y =
@@ -71,7 +68,7 @@ let iter elems f =
  *   in
  *   f [||];
  *   v3 n
- * 
+ *
  * let iter_filtered ~n ~f:t f =
  *   let a = Bigarray.(Array1.create int c_layout (n + 1)) in
  *   let l = Bigarray.(Array1.create int c_layout (n + 1)) in
