@@ -11,13 +11,13 @@ homepage: "https://github.com/jfeser/combinat"
 doc: "https://jfeser.github.io/combinat/combinat/index.html"
 bug-reports: "https://github.com/jfeser/combinat/issues"
 depends: [
-  "ocaml" {>= "4.07"}
-  "dune" {build & >= "2"}
-  "base" {>= "v0.12"}
-  "ppx_expect" {with-test & >= "v0.12"}
-  "ppx_sexp_conv" {with-test & >= "v0.12"}
-  "stdio" {with-test & >= "v0.12"}
-  "core_bench" {with-test & >= "v0.12"}
+  "ocaml" {>= "4.08"}
+  "dune" {>= "2"}
+  "core" {with-test & >= "v0.15"}
+  "expect_test_helpers_core" {with-test & >= "v0.15"}
+  "ppx_jane" {with-test & >= "v0.15"}
+  "core_bench" {with-test & >= "v0.15"}
+  "core_unix" {with-test & >= "v0.15"}
 ]
 build: [
   ["dune" "subst"] {pinned}

@@ -1,3 +1,9 @@
+## 3.0 (2022-04-04)
+
+ - Complete API redesign.
+ - Removed dependency on Base stdlib.
+ - Added iterators for sequences.
+
 ## 2.0 (2020-01-22)
 
  - Breaking change: made some types abstract.

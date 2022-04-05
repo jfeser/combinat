@@ -2,5 +2,5 @@
  (name bench)
  (libraries core_bench core_unix.command_unix combinat)
  (preprocess
-  (pps ppx_let))
+  (pps ppx_jane))
  (modules bench))
