@@ -44,32 +44,24 @@ module Algorithm_t = struct
 end
 
 module Algorithm_l = struct
-  let rec init ~n ~t f =
-    let c =
-      Array.init (t + 3) (fun j ->
-          if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
-    in
-    let args = { c; x = 0; f; t } in
-    visit args
-
-  and visit args =
-    args.f @@ Array.copy args.c;
-    find args
-
-  and find args =
-    let c = args.c in
+  let rec find ~c ~f ~t =
     let j = ref 1 in
     while c.(!j) + 1 = c.(!j + 1) do
       c.(!j) <- !j - 1;
       j := !j + 1
     done;
-    done_ args !j
+    if !j <= t then (
+      c.(!j) <- c.(!j) + 1;
+      f (Array.copy c);
+      find ~c ~f ~t)
 
-  and done_ args j = if j > args.t then () else increase args j
-
-  and increase args j =
-    args.c.(j) <- args.c.(j) + 1;
-    visit args
+  let init ~n ~t f =
+    let c =
+      Array.init (t + 3) (fun j ->
+          if 1 <= j && j <= t then j - 1 else if j = t + 1 then n else 0)
+    in
+    f (Array.copy c);
+    find ~c ~f ~t
 end
 
 let iter elems ~k:t f =
