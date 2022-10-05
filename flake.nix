@@ -8,20 +8,27 @@
       let
         pkgs = nixpkgs.legacyPackages.${system};
         ocamlPkgs = pkgs.ocaml-ng.ocamlPackages_4_14;
+        checkInputs = [
+          ocamlPkgs.core
+          ocamlPkgs.core_unix
+          ocamlPkgs.core_bench
+          ocamlPkgs.ppx_jane
+          ocamlPkgs.expect_test_helpers_core
+        ];
         defaultPackage = ocamlPkgs.buildDunePackage rec {
           pname = "combinat";
           version = "3.0";
           useDune3 = true;
           minimalOCamlVersion = "4.08";
-          propagatedBuildInputs = [ ocamlPkgs.core ];
-          checkInputs = [ ocamlPkgs.core_unix ocamlPkgs.core_bench ];
+          checkInputs = checkInputs;
           src = ./.;
         };
       in {
         defaultPackage = defaultPackage;
         devShell = pkgs.mkShell {
           nativeBuildInputs =
-            [ pkgs.ocamlformat pkgs.opam pkgs.ocamlPackages.ocaml-lsp ];
+            [ pkgs.ocamlformat pkgs.opam pkgs.ocamlPackages.ocaml-lsp ]
+            ++ checkInputs;
           inputsFrom = [ defaultPackage ];
         };
       });
