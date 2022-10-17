@@ -1,13 +1,13 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.05";
     flake-utils.url = "github:numtide/flake-utils";
   };
   outputs = { self, flake-utils, nixpkgs }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = nixpkgs.legacyPackages.${system};
-        ocamlPkgs = pkgs.ocaml-ng.ocamlPackages_4_14;
+        ocamlPkgs = pkgs.ocaml-ng.ocamlPackages;
         checkInputs = [
           ocamlPkgs.core
           ocamlPkgs.core_unix
