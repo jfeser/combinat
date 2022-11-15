@@ -6,30 +6,35 @@
   outputs = { self, flake-utils, nixpkgs }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        ocamlPkgs = pkgs.ocaml-ng.ocamlPackages;
-        checkInputs = [
-          ocamlPkgs.core
-          ocamlPkgs.core_unix
-          ocamlPkgs.core_bench
-          ocamlPkgs.ppx_jane
-          ocamlPkgs.expect_test_helpers_core
-        ];
-        defaultPackage = ocamlPkgs.buildDunePackage rec {
-          pname = "combinat";
-          version = "3.0";
-          useDune3 = true;
-          minimalOCamlVersion = "4.08";
-          checkInputs = checkInputs;
-          src = ./.;
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ self.overlay.${system} ];
         };
       in {
-        defaultPackage = defaultPackage;
+        overlay = self: super: {
+          ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
+            combinat = super.buildDunePackage {
+              pname = "combinat";
+              version = "3.0";
+              duneVersion = "3";
+              minimalOCamlVersion = "4.08";
+              src = ./.;
+            };
+          });
+        };
+        defaultPackage = pkgs.ocamlPackages.combinat;
         devShell = pkgs.mkShell {
-          nativeBuildInputs =
-            [ pkgs.ocamlformat pkgs.opam pkgs.ocamlPackages.ocaml-lsp ]
-            ++ checkInputs;
-          inputsFrom = [ defaultPackage ];
+          nativeBuildInputs = [
+            pkgs.ocamlformat
+            pkgs.opam
+            pkgs.ocamlPackages.ocaml-lsp
+            pkgs.ocamlPackages.core
+            pkgs.ocamlPackages.core_unix
+            pkgs.ocamlPackages.core_bench
+            pkgs.ocamlPackages.ppx_jane
+            pkgs.ocamlPackages.expect_test_helpers_core
+          ];
+          inputsFrom = [ pkgs.ocamlPackages.combinat ];
         };
       });
 }
