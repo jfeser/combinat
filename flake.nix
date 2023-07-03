@@ -1,28 +1,21 @@
 {
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-22.05";
+    nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
   outputs = { self, flake-utils, nixpkgs }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = import nixpkgs {
-          inherit system;
-          overlays = [ self.overlay.${system} ];
+        pkgs = nixpkgs.legacyPackages.${system};
+        ocamlPkgs = pkgs.ocaml-ng.ocamlPackages;
+        combinat = ocamlPkgs.buildDunePackage {
+          pname = "combinat";
+          version = "3.0";
+          duneVersion = "3";
+          src = ./.;
         };
       in {
-        overlay = self: super: {
-          ocamlPackages = super.ocamlPackages.overrideScope' (self: super: {
-            combinat = super.buildDunePackage {
-              pname = "combinat";
-              version = "3.0";
-              duneVersion = "3";
-              minimalOCamlVersion = "4.08";
-              src = ./.;
-            };
-          });
-        };
-        defaultPackage = pkgs.ocamlPackages.combinat;
+        defaultPackage = combinat;
         devShell = pkgs.mkShell {
           nativeBuildInputs = [
             pkgs.ocamlformat
@@ -34,7 +27,7 @@
             pkgs.ocamlPackages.ppx_jane
             pkgs.ocamlPackages.expect_test_helpers_core
           ];
-          inputsFrom = [ pkgs.ocamlPackages.combinat ];
+          inputsFrom = [ combinat ];
         };
       });
 }
