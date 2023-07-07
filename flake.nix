@@ -6,16 +6,24 @@
   outputs = { self, flake-utils, nixpkgs }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        ocamlPkgs = pkgs.ocaml-ng.ocamlPackages;
-        combinat = ocamlPkgs.buildDunePackage {
-          pname = "combinat";
-          version = "3.0";
-          duneVersion = "3";
-          src = ./.;
+        overlay = final: prev: {
+          ocamlPackages = prev.ocamlPackages.overrideScope' (ofinal: oprev: {
+            combinat = ofinal.buildDunePackage {
+              pname = "combinat";
+              version = "3.0";
+              duneVersion = "3";
+              src = ./.;
+            };
+          });
         };
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [ overlay ];
+        };
+
       in {
-        defaultPackage = combinat;
+        overlays.default = overlay;
+        defaultPackage = pkgs.ocamlPackages.combinat;
         devShell = pkgs.mkShell {
           nativeBuildInputs = [
             pkgs.ocamlformat
@@ -27,7 +35,7 @@
             pkgs.ocamlPackages.ppx_jane
             pkgs.ocamlPackages.expect_test_helpers_core
           ];
-          inputsFrom = [ combinat ];
+          inputsFrom = [ self.defaultPackage.${system} ];
         };
       });
 }
