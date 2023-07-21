@@ -30,3 +30,6 @@ combinations ~n:4 ~k:2 = [[0;1]; [0;2]; [0;3]; [1;2]; [1;3]; [2;3]]
 
 val compositions : n:int -> k:int -> int array iter
 (** Iterator over the {i k} compositions of an integer {i n}. *)
+
+val product : 'a list list -> 'a array iter
+(** Iterator over the cartesian product of a list of lists. *)

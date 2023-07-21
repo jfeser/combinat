@@ -7,3 +7,4 @@ let sequences_restricted = Sequence.iter_restricted
 let partitions = Partition.iter
 let partitions_with_zeros = Partition.iter_with_zeros
 let compositions = Composition.iter
+let product = Product.iter
